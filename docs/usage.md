@@ -2,23 +2,37 @@
 
 ## How to Invoke Anubis
 
-### Via Copilot CLI Command
+### Via Claude Code
 
 ```bash
-# Interactive agent selection
-copilot -agent
+# Use the Anubis agent
+claude -p "Use Anubis to review this C# code..."
 
-# Or direct invocation
+# Or if you have the agent registered
+claude --agent Anubis --prompt "Review this code..."
+```
+
+### Via OpenCode
+
+```bash
+# Direct invocation with agent
+opencode --agent anubis
+
+# Or reference the agent file
+opencode --agent Anubis.agent.md --prompt "Review this code..."
+```
+
+### Via GitHub Copilot CLI
+
+```bash
+# Direct invocation
 copilot task Anubis --prompt "Review this code..."
 
 # With file input
 copilot task Anubis < my-code.cs
-
-# With configuration override
-copilot task Anubis --model claude-3-5-sonnet --prompt "..."
 ```
 
-### Via GitHub Copilot Chat (if available)
+### Via GitHub Copilot Chat (VS Code)
 
 ```
 @Anubis review my service layer for security issues
@@ -44,7 +58,8 @@ find src -name "*.cs" -type f -exec wc -l {} \; | sort -rn | head -10
 ### Step 2: Invoke Anubis with Context
 
 ```bash
-copilot task Anubis --prompt "
+# Example with Claude Code
+claude --agent Anubis --prompt "
 Code Review Request:
 
 Project: E-commerce Payment System
@@ -122,7 +137,7 @@ If Anubis identifies issues that need specialized analysis:
 
 ```bash
 # Handoff to Anubis-devops for pipeline security
-copilot task Anubis-devops --prompt "
+claude --agent Anubis-devops --prompt "
 Based on code review findings from Anubis, 
 audit our Azure DevOps pipeline for:
 1. Secret exposure in logs
@@ -131,7 +146,7 @@ audit our Azure DevOps pipeline for:
 ..."
 
 # Handoff to Anubis-Runtime for performance
-copilot task Anubis-Runtime --prompt "
+claude --agent Anubis-Runtime --prompt "
 E-commerce payment service processes 10M transactions/year.
 Profile for:
 - N+1 query patterns in PaymentRepository
@@ -139,6 +154,8 @@ Profile for:
 - Memory allocation in payment processing
 ..."
 ```
+
+> **Note**: Anubis-devops, Anubis-Runtime, and Anubis-Arch are companion agents available in the same repository.
 
 ## Input Schema
 
@@ -248,30 +265,23 @@ Profile for:
 
 ## Configuration Options
 
-Edit `~/.copilot/agents/Anubis.agent.md` to customize:
+Anubis is configured via the agent file frontmatter. Edit the `Anubis.agent.md` file for your platform to customize behavior.
 
-```yaml
-# Model override
-#model: "claude-3-5-sonnet"
+### Platform-specific configuration
 
-# Severity threshold (minimum to report)
-# Uncomment and adjust as needed:
-# #min_severity: "medium"  # Skip "low" severity issues
+- **Claude Code**: edit the agent file or configure via `.claude/settings.json`
+- **OpenCode**: register in `opencode.json`
+- **GitHub Copilot**: edit `~/.copilot/config.json` to set the model
 
-# Focus areas (comma-separated)
-# #focus: "security,architecture,performance"
-
-# Output format
-# #output_format: "json"  # or "markdown", "html"
-```
-
-Command-line overrides:
-
-```bash
-copilot task Anubis \
-  --model claude-3-5-sonnet \
-  --prompt "Review code for security" \
-  --config '{"min_severity": "high"}'
+```json
+{
+  "agents": {
+    "Anubis": {
+      "path": "~/.copilot/agents/Anubis.agent.md",
+      "enabled": true
+    }
+  }
+}
 ```
 
 ## Best Practices
@@ -355,7 +365,7 @@ Review for:
 
 ## Support & More Information
 
-- [Copilot CLI Docs](https://github.com/github/copilot-cli)
+- [Anubis GitHub Repository](https://github.com/LuPaLa-Coder/anubis)
 - [OWASP Testing Guide](https://owasp.org/www-project-web-security-testing-guide/)
 - [Microsoft .NET Security Best Practices](https://learn.microsoft.com/en-us/dotnet/standard/security/)
 - [Clean Architecture by Robert C. Martin](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)

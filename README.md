@@ -65,8 +65,7 @@ Report strutturato con:
 
 ## Support & Contacts
 
-- **Documentation**: [GitHub Copilot CLI Docs](https://github.com/github/copilot-cli)
-- **Issues & Feedback**: Copilot CLI community channels
+- **Issues & Feedback**: [GitHub Issues](https://github.com/LuPaLa-Coder/anubis/issues)
 - **Related Agents**: Anubis-devops (pipeline security), Anubis-Runtime (performance), Anubis-Arch (architecture governance)
 
 ---
@@ -75,6 +74,7 @@ Report strutturato con:
 - Focus principale è la qualità e sicurezza del **codice .NET**
 - Analisi architetturale di componenti applicativi
 - Security review di sorgente
+
 
 **Quando usare un altro agent:**
 - Se il focus è una **pipeline Azure DevOps YAML** → usa **Anubis-devops**
