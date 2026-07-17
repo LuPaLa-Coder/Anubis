@@ -165,39 +165,6 @@ copy_anubis_docs() {
     fi
 }
 
-copy_devops_docs() {
-    local target_dir="$1"
-    local docs_dir="${target_dir}/anubis-devops-docs"
-    mkdir -p "$docs_dir"
-    local copied=0
-
-    local doc_files=("installation.md" "usage.md" "examples.md")
-
-    for doc in "${doc_files[@]}"; do
-        local dest="${docs_dir}/${doc}"
-
-        if [[ "$DO_BACKUP" == "true" ]] && [[ -f "$dest" ]]; then
-            cp "$dest" "${dest}.backup-$(date +%Y%m%d-%H%M%S)"
-        fi
-
-        # I docs devops sono in docs/devops/
-        if [[ -f "$SCRIPT_DIR/docs/devops/$doc" ]]; then
-            cp "$SCRIPT_DIR/docs/devops/$doc" "$dest"
-        elif command -v curl &>/dev/null; then
-            curl -fsSL "${REPO_URL}/docs/devops/${doc}" -o "$dest" || { rm -f "$dest"; continue; }
-        elif command -v wget &>/dev/null; then
-            wget -q "${REPO_URL}/docs/devops/${doc}" -O "$dest" || { rm -f "$dest"; continue; }
-        else
-            continue
-        fi
-
-        ((copied++)) || true
-    done
-
-    if [[ $copied -gt 0 ]]; then
-        echo -e "  ${GREEN}✓${NC} ${copied} doc Devops → ${docs_dir}/"
-    fi
-}
 
 # ── Frontmatter per piattaforma ──────────────────────────────────────────────
 
@@ -395,7 +362,6 @@ install_agent() {
 
     if [[ "$agent_filter" == "all" || "$agent_filter" == "devops" ]]; then
         if install_one_agent "$target_dir" "$agent_name" "devops"; then
-            copy_devops_docs "$target_dir"
             ((success++)) || true
         else
             ((failed++)) || true
@@ -438,7 +404,6 @@ uninstall_agent() {
 
     # Rimuovi le directory dei docs
     rm -rf "${target_dir}/anubis-docs"
-    rm -rf "${target_dir}/anubis-devops-docs"
 }
 
 # ── Local Install ────────────────────────────────────────────────────────────
@@ -481,8 +446,6 @@ install_local() {
         else
             echo -e "  ${RED}✗${NC} Installazione locale fallita per ${DEVOPS_FILE}"
         fi
-
-        copy_devops_docs "$dest_dir"
     fi
 
     # Crea/aggiorna settings.json Claude Code con entrambi gli agenti
