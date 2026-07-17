@@ -513,7 +513,7 @@ main() {
     print_banner
 
     detect_os
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd 2>/dev/null || pwd)"
 
     local mode="install"
     local target_agent=""
