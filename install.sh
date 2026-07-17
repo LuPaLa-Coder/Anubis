@@ -129,41 +129,6 @@ get_agent_body() {
     echo "$body"
 }
 
-# ── Docs ─────────────────────────────────────────────────────────────────────
-# Copia i file docs/ nella directory dell'agente come riferimento.
-
-copy_anubis_docs() {
-    local target_dir="$1"
-    local docs_dir="${target_dir}/anubis-docs"
-    mkdir -p "$docs_dir"
-    local copied=0
-
-    local doc_files=("installation.md" "usage.md" "examples.md")
-
-    for doc in "${doc_files[@]}"; do
-        local dest="${docs_dir}/${doc}"
-
-        if [[ "$DO_BACKUP" == "true" ]] && [[ -f "$dest" ]]; then
-            cp "$dest" "${dest}.backup-$(date +%Y%m%d-%H%M%S)"
-        fi
-
-        if [[ -f "$SCRIPT_DIR/docs/$doc" ]]; then
-            cp "$SCRIPT_DIR/docs/$doc" "$dest"
-        elif command -v curl &>/dev/null; then
-            curl -fsSL "${REPO_URL}/docs/${doc}" -o "$dest" || { rm -f "$dest"; continue; }
-        elif command -v wget &>/dev/null; then
-            wget -q "${REPO_URL}/docs/${doc}" -O "$dest" || { rm -f "$dest"; continue; }
-        else
-            continue
-        fi
-
-        ((copied++)) || true
-    done
-
-    if [[ $copied -gt 0 ]]; then
-        echo -e "  ${GREEN}✓${NC} ${copied} doc Anubis  → ${docs_dir}/"
-    fi
-}
 
 
 # ── Frontmatter per piattaforma ──────────────────────────────────────────────
@@ -353,7 +318,6 @@ install_agent() {
 
     if [[ "$agent_filter" == "all" || "$agent_filter" == "anubis" ]]; then
         if install_one_agent "$target_dir" "$agent_name" "anubis"; then
-            copy_anubis_docs "$target_dir"
             ((success++)) || true
         else
             ((failed++)) || true
@@ -402,8 +366,7 @@ uninstall_agent() {
         echo -e "  ${YELLOW}○${NC} Nessun Anubis-devops presente per ${agent_name}"
     fi
 
-    # Rimuovi le directory dei docs
-    rm -rf "${target_dir}/anubis-docs"
+    # Rimuovi i file agent
 }
 
 # ── Local Install ────────────────────────────────────────────────────────────
@@ -428,8 +391,6 @@ install_local() {
         else
             echo -e "  ${RED}✗${NC} Installazione locale fallita per ${ANUBIS_FILE}"
         fi
-
-        copy_anubis_docs "$dest_dir"
     fi
 
     if [[ "$agent_filter" == "all" || "$agent_filter" == "devops" ]]; then
