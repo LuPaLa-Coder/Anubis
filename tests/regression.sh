@@ -126,6 +126,22 @@ done < <(grep -rhoE '(references|schemas|examples|tests|docs)/[A-Za-z0-9._/-]+\.
           Anubis.agent.md Anubis.devops.md references/ README.md 2>/dev/null | sort -u)
 if [[ "$MISSING" -eq 0 ]]; then ok "no broken internal references"; else bad "$MISSING broken internal reference(s)"; fi
 
+head "Gate 11 — Anubis rule families preserved (ANB-*)"
+ANB_MIN=("ANB-SEC:12" "ANB-ARCH:10" "ANB-PERF:12" "ANB-DOTNET:12" "ANB-EFCORE:8" "ANB-TEST:10" "ANB-BUILD:9")
+for entry in "${ANB_MIN[@]}"; do
+  family="${entry%%:*}"
+  expected="${entry##*:}"
+  n=$(grep -rhoE "${family}-[0-9]{3}" references/ 2>/dev/null | sort -u | wc -l | tr -d ' ')
+  if [[ "$n" -ge "$expected" ]]; then ok "$family ids present ($n >= $expected)"; else bad "$family ids missing (found $n, expected >= $expected)"; fi
+done
+
+head "Gate 12 — Reference & schema validation"
+if bash tests/validate.sh >/dev/null 2>&1; then
+  ok "tests/validate.sh (reference + schema) passed"
+else
+  bad "tests/validate.sh (reference + schema) failed"
+fi
+
 head "Result"
 printf '  passed: %d   failed: %d\n' "$PASS" "$FAIL"
 if [[ "$FAIL" -eq 0 ]]; then printf '\n\033[0;32mREGRESSION OK\033[0m\n'; exit 0; fi

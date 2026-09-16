@@ -61,15 +61,24 @@ mkdir -p ~/.copilot/agents
 cp Anubis.agent.md ~/.copilot/agents/
 ```
 
-### 3. Clone or Copy Agent Directory
+### 3. Install runtime package
+
+The skills reference `references/` and `schemas/` at runtime, so those
+directories must be installed next to the agent files.
 
 ```bash
-# Option A: Use the installer script
+# Option A: Use the installer (installs agents + references/ + schemas/ + examples/)
 ./install.sh
 
-# Option B: Manual copy
-cp -r docs/ ~/.claude/agents/anubis-docs/
+# Option B: Manual copy for a single agent directory
+DEST=~/.claude/agents
+mkdir -p "$DEST"
+cp Anubis.agent.md Anubis.devops.md "$DEST/"
+cp -R references schemas examples "$DEST/"
 ```
+
+The installer verifies that the agent files and all required runtime files are
+present and fails if any is missing. Re-running it is safe (idempotent).
 
 ### 4. Quick Test
 

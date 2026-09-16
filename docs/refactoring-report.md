@@ -14,7 +14,9 @@ Baseline: `docs/refactoring-baseline.md`.
 | --- | --- | --- | --- |
 | `Anubis.agent.md` | 431 lines, monolithic contract + pattern catalogue + model table | 209 lines, operating contract | knowledge moved to `references/`; deterministic workflow; evidence/confidence/review-status; model names replaced by capability labels |
 | `Anubis.devops.md` | 780 lines, monolithic contract + 41 rules inline + regex + examples | 260 lines, operating contract | rule catalogue, regex and YAML examples moved to `references/azure-devops-rules.md`; structural parsing first; score marked secondary |
-| `README.md` | described agents + JSON output only | describes architecture, skills, references, schemas, tests, handoff | documentation of the new structure (STEP 21) |
+| `README.md` | described agents + JSON output only | describes architecture, skills, references, schemas, tests, handoff; planned agents labelled | documentation of the new structure (STEP 21) |
+| `install.sh` | agent-only install, no runtime assets | packages `references/`, `schemas/`, `examples/`; idempotent; post-install verification; `--dest` target | final hardening: installable package |
+| `uninstall.sh` | removed agent files only | also removes installed `references/`, `schemas/`, `examples/` (marker-guarded) | final hardening: clean uninstall |
 
 ## Files Added
 
@@ -32,7 +34,11 @@ Baseline: `docs/refactoring-baseline.md`.
 - `tests/anubis/{security,architecture,performance,testing,false-positive}.md`.
 - `tests/devops/{secrets,identity,supply-chain,pipeline,false-positive}.md`.
 - `tests/regression.md`, `tests/regression.sh` — executable regression suite.
-- `docs/refactoring-baseline.md`, `docs/refactoring-report.md`.
+- `tests/validate.sh` — reference and JSON Schema validation (final hardening).
+- `tests/install_test.sh` — installer / idempotency / package regression test
+  (final hardening).
+- `docs/refactoring-baseline.md`, `docs/refactoring-report.md`,
+  `docs/final-audit-report.md`.
 
 ## Files Removed
 
@@ -120,12 +126,20 @@ is the first executable verification layer.
 ```text
 $ bash tests/regression.sh
 REGRESSION OK
-  passed: 133   failed: 0
+  passed: 141   failed: 0
 ```
 
 Coverage: files present, operating-contract sections, output contract, handoff
-targets, all 41 AZDO rule IDs, MSBuild/.NET patterns, score formula, BLOCKER not
-a severity, JSON schemas valid, no broken internal references.
+targets, all 41 AZDO rule IDs, all ANB rule families, MSBuild/.NET patterns,
+score formula, BLOCKER not a severity, JSON schemas valid, no broken internal
+references, and delegation to `tests/validate.sh` (reference + schema).
+
+Additional executable layers added by the final hardening pass:
+
+```text
+$ bash tests/validate.sh      # reference + schema validation (REFERENCE/SCHEMA TEST: PASS)
+$ bash tests/install_test.sh  # installer, idempotency, installed-package validation
+```
 
 Behavioural tests live in `tests/anubis/` and `tests/devops/`; they are
 specification tests (input → expected findings/severity/confidence/handoff/
@@ -133,39 +147,37 @@ non-findings) intended for LLM-driven or manual execution.
 
 ## Known Limitations
 
-1. **Distribution of references.** `install.sh` extracts only the body of each
-   skill (after frontmatter) and installs a single `.md` file per agent. The
-   `references/`, `schemas/`, `examples/` and `tests/` assets are not yet
-   distributed by the installer. The operating contracts remain functional
-   standalone (workflow, contracts and severity behaviour are inline), but the
-   knowledge base is only available from the repository checkout.
-2. **No automated LLM harness.** Behavioural tests are specifications, not
+1. **No automated LLM harness.** Behavioural tests are specifications, not
    machine-executed assertions; there is no runner that invokes a model and
    checks findings.
-3. **Pre-existing count discrepancy.** The source claimed "42 rules
+2. **Pre-existing count discrepancy.** The source claimed "42 rules
    (10/19/13)" but contained 41 unique IDs (10 CRITICAL, 17 HIGH, 14 MEDIUM).
    This report and the references use the accurate count; the original claim is
    recorded in `docs/refactoring-baseline.md`.
-4. **`AZDO-SEC009` gap.** The id never existed in the source and is intentionally
+3. **`AZDO-SEC009` gap.** The id never existed in the source and is intentionally
    absent; it is not a lost rule.
-5. **Legacy companion agents.** README still mentions Anubis-Runtime / Anubis-Arch
-   / Anubis-GreenOps, which are not part of this repository.
+4. **Legacy companion agents.** Anubis-Runtime / Anubis-Arch / Anubis-GreenOps
+   are not part of this repository; the README now labels them under
+   *Planned Agents*.
 
 ## Follow-up Recommendations
 
-1. Extend `install.sh` (and `uninstall.sh`) to bundle `references/`, `schemas/`
-   and `examples/` alongside the installed agents, resolving a path convention
-   relative to the agent directory, so installed skills keep the knowledge base.
-2. Add a CI job running `tests/regression.sh` plus a Markdown link checker and
-   JSON Schema validation (e.g. `ajv` / `check-jsonschema`).
-3. Add an optional LLM-driven test runner that executes `tests/anubis/*` and
+1. Add a CI job running `tests/regression.sh`, `tests/validate.sh` and
+   `tests/install_test.sh`.
+2. Add an optional LLM-driven test runner that executes `tests/anubis/*` and
    `tests/devops/*` and asserts the expected findings.
-4. Add `docs/usage.md` / `docs/devops/usage.md` sections describing the
+3. Add `docs/usage.md` / `docs/devops/usage.md` sections describing the
    Finding/Review/Handoff contracts and confidence.
-5. Consider assigning explicit IDs to any future Anubis patterns using the
+4. Consider assigning explicit IDs to any future Anubis patterns using the
    family registry in `references/review-protocol.md` §11.
-6. Reconcile the legacy companion agents (Anubis-Runtime / Arch / GreenOps) or
-   remove them from the README roadmap.
+
+## Final Verification
+
+- Installer verified
+- Runtime references verified
+- Schemas verified
+- Regression tests passed
+- Installer idempotency verified
 
 ## Acceptance Criteria Mapping
 
@@ -188,3 +200,8 @@ non-findings) intended for LLM-driven or manual execution.
 | No rule/handoff lost; Quick Pass/Full Review kept | ✅ Gates 3–6 |
 | Tests + regression created | ✅ `tests/` |
 | README updated; refactoring report created | ✅ |
+| Runtime references installed with the skills | ✅ `install.sh` copies `references/` + `schemas/` |
+| Installer idempotent | ✅ `tests/install_test.sh` |
+| Missing runtime file fails installation | ✅ post-install verification |
+| Broken references detected automatically | ✅ `tests/validate.sh` |
+| README distinguishes current vs planned agents | ✅ `## Planned Agents` |

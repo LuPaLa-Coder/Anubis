@@ -49,11 +49,51 @@ Anubis handles:
 
 | Mode | Trigger | Capability | Output |
 | --- | --- | --- | --- |
-| **Quick Pass** | "quick"/"fast"/"light", single file, orientation | lightweight model | severity table + synthetic report (3–5 points); sections 1–6 compressed or omitted |
-| **Full Review** (default) | deep review, security audit, architecture validation, complex refactoring, multi-file | reasoning-capable, large-context model | full report (sections 1–8) + complete Common Output Contract |
+| **Quick Pass** | "quick"/"fast"/"light", single file, orientation | lightweight model | triage report: findings in the Finding Contract form (severity + confidence + evidence), concise remediation, verification, handoff; analysis sections omitted |
+| **Full Review** (default) | deep review, security audit, architecture validation, complex refactoring, multi-file | reasoning-capable, large-context model | exhaustive report (all Report Structure sections) + complete Common Output Contract |
 
 - A Quick Pass declares explicitly:
   *"Quick Pass — per review completa esegui un Full Review."*
+
+## Quick Pass
+
+Quick Pass is a triage-oriented review.
+
+It MUST:
+
+1. establish the review scope;
+2. identify high-confidence findings;
+3. report findings using the common Finding Contract;
+4. include severity and confidence;
+5. provide concise remediation;
+6. provide verification when remediation is proposed;
+7. include handoff when another specialist is required.
+
+It MAY omit detailed analysis and extended explanations.
+
+It MUST NOT omit evidence for reported findings.
+
+## Full Review
+
+Full Review is the exhaustive mode and remains the default. It includes:
+
+```text
+scope
+context
+evidence
+validated findings
+severity
+confidence
+impact
+root cause
+remediation
+verification
+handoff
+```
+
+Full Review produces every Report Structure section and the complete Common
+Output Contract. A Quick Pass never removes Full Review capabilities: it only
+omits analysis sections, not the Finding, Evidence or Verification contracts.
 
 ### BLOCKED short-circuit
 If the required context is insufficient for a trustworthy review, the **review
@@ -78,7 +118,10 @@ status** is `BLOCKED` (never a severity). Do not generate sections 1–6. Emit
 10. **Report** — produce the structured review.
 
 ## Report Structure
-Full Review follows these sections; Quick Pass keeps only §7–§8.
+Full Review follows all sections below. Quick Pass follows the Quick Pass
+contract above: it reports findings in the Finding Contract form (severity +
+confidence + evidence) and may omit the analysis sections 1–6. Evidence is
+never omitted in either mode.
 1. **Problemi di Sicurezza** 🔐 — unsafe variables, hardcoded credentials,
    injection/sanitisation, exception handling, sensitive logging.
 2. **Code Smell & Duplicazioni** 🧹 — repeated blocks, recurring patterns,
@@ -180,8 +223,9 @@ open blocks). When the review originates from a DevOps handoff, reuse the
 incoming context before re-deriving it.
 
 ## Output Contract
-Full Review closes with the Common Output Contract; Quick Pass requires only
-`Blocchi` and `Handoff al prossimo agente`.
+Full Review closes with the complete Common Output Contract. Quick Pass MUST
+include `Blocchi` and `Handoff al prossimo agente`; the remaining sections are
+optional but evidence is never omitted in either mode.
 ```markdown
 ## Decisioni chiave
 ## Assunzioni

@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 # =============================================================================
-#  Anubis Agent Suite — Global Installer v1.1
+#  Anubis Agent Suite — Global Installer v1.2
 #  Installa Anubis (.NET) e Anubis-devops (Azure DevOps) per tutti i
 #  coding agent rilevati con frontmatter nativo:
 #  Claude Code · OpenCode · GitHub Copilot · Cursor · Windsurf · Codex
+#
+#  Ogni installazione include il pacchetto runtime completo:
+#    Anubis.agent.md · Anubis.devops.md · references/ · schemas/ · examples/
 #
 #  Uso:
 #    curl -fsSL https://raw.githubusercontent.com/LuPaLa-Coder/anubis/main/install.sh | bash
@@ -12,6 +15,7 @@
 #    ./install.sh --agent devops                   # solo Anubis-devops
 #    ./install.sh --agent claude                   # solo per Claude Code
 #    ./install.sh --local                          # installa nella directory corrente
+#    ./install.sh --dest DIR                       # installa in una directory specifica
 #    ./install.sh --backup                         # backup dei file esistenti
 #    ./install.sh --uninstall                      # rimuove tutta la suite
 # =============================================================================
@@ -23,8 +27,43 @@ RED='\033[0;31m'   GREEN='\033[0;32m'   YELLOW='\033[1;33m'
 CYAN='\033[0;36m'  BOLD='\033[1m'      NC='\033[0m'
 
 # ── Configurazione ───────────────────────────────────────────────────────────
-ANUBIS_VERSION="1.1.0"
+ANUBIS_VERSION="1.2.0"
 REPO_URL="https://raw.githubusercontent.com/LuPaLa-Coder/anubis/main"
+REPO_TARBALL="https://github.com/LuPaLa-Coder/anubis/archive/refs/heads/main.tar.gz"
+
+# Directory del pacchetto runtime copiate accanto agli agenti installati.
+PACKAGE_ASSET_DIRS=("references" "schemas" "examples")
+
+# File runtime la cui assenza è un errore fatale (installazione rotta).
+REQUIRED_RUNTIME_FILES=(
+    "references/review-protocol.md"
+    "references/dotnet.md"
+    "references/security.md"
+    "references/architecture.md"
+    "references/performance.md"
+    "references/efcore.md"
+    "references/testing.md"
+    "references/msbuild.md"
+    "references/azure-devops-rules.md"
+    "schemas/finding.schema.json"
+    "schemas/review.schema.json"
+    "schemas/handoff.schema.json"
+)
+
+# Marker che identifica una directory di pacchetto gestita da questo installer.
+PACKAGE_MARKER=".anubis-package"
+
+# Directory sorgente da cui copiare gli asset (checkout locale o tarball).
+SOURCE_DIR=""
+PACKAGE_TMP=""
+
+# ── Cleanup ──────────────────────────────────────────────────────────────────
+cleanup() {
+    if [[ -n "${PACKAGE_TMP:-}" && -d "${PACKAGE_TMP:-}" ]]; then
+        rm -rf "$PACKAGE_TMP"
+    fi
+}
+trap cleanup EXIT
 
 # ── Agente 1: Anubis (.NET) ──────────────────────────────────────────────────
 ANUBIS_FILE="Anubis.agent.md"
@@ -83,7 +122,9 @@ get_agent_body() {
     esac
 
     local src=""
-    if [[ -f "$SCRIPT_DIR/$agent_filename" ]]; then
+    if [[ -n "${SOURCE_DIR:-}" && -f "$SOURCE_DIR/$agent_filename" ]]; then
+        src="$SOURCE_DIR/$agent_filename"
+    elif [[ -f "$SCRIPT_DIR/$agent_filename" ]]; then
         src="$SCRIPT_DIR/$agent_filename"
     else
         src=$(mktemp)
@@ -121,14 +162,172 @@ get_agent_body() {
         _BODY_ANUBIS="$body"
     fi
 
-    # Pulizia se è stato scaricato in tmp
-    if [[ "$src" != "$SCRIPT_DIR/$agent_filename" ]]; then
+    # Pulizia se è stato scaricato in tmp (non cancellare la sorgente locale).
+    if [[ "$src" != "$SCRIPT_DIR/$agent_filename" ]] && \
+       [[ -z "${SOURCE_DIR:-}" || "$src" != "$SOURCE_DIR/$agent_filename" ]]; then
         rm -f "$src"
     fi
 
     echo "$body"
 }
 
+# ── Sorgente del pacchetto (checkout locale o tarball) ───────────────────────
+# Se lo script è eseguito da un checkout completo usa quello; altrimenti
+# scarica il tarball del repository una sola volta e ne estrae gli asset.
+
+fetch_package_source() {
+    # Override esplicito (usato dai test per puntare a una sorgente controllata).
+    if [[ -n "${ANUBIS_SOURCE_DIR:-}" ]]; then
+        SOURCE_DIR="$ANUBIS_SOURCE_DIR"
+        return 0
+    fi
+
+    if [[ -d "$SCRIPT_DIR/references" && -d "$SCRIPT_DIR/schemas" ]]; then
+        SOURCE_DIR="$SCRIPT_DIR"
+        return 0
+    fi
+
+    PACKAGE_TMP="$(mktemp -d)"
+    local archive="$PACKAGE_TMP/anubis.tar.gz"
+
+    if command -v curl &>/dev/null; then
+        curl -fsSL "$REPO_TARBALL" -o "$archive" || {
+            echo -e "${RED}✗${NC} Download del pacchetto fallito da ${REPO_TARBALL}" >&2
+            return 1
+        }
+    elif command -v wget &>/dev/null; then
+        wget -q "$REPO_TARBALL" -O "$archive" || {
+            echo -e "${RED}✗${NC} Download del pacchetto fallito da ${REPO_TARBALL}" >&2
+            return 1
+        }
+    else
+        echo -e "${RED}✗${NC} Nessuno tra curl o wget disponibile. Installa curl e riprova." >&2
+        return 1
+    fi
+
+    tar -xzf "$archive" -C "$PACKAGE_TMP" || {
+        echo -e "${RED}✗${NC} Estrazione del pacchetto fallita" >&2
+        return 1
+    }
+
+    local ref
+    ref="$(find "$PACKAGE_TMP" -maxdepth 2 -type d -name references -print -quit 2>/dev/null)"
+    if [[ -z "$ref" ]]; then
+        echo -e "${RED}✗${NC} references/ non trovata nel pacchetto scaricato" >&2
+        return 1
+    fi
+    SOURCE_DIR="$(dirname "$ref")"
+
+    if [[ ! -d "$SOURCE_DIR/references" || ! -d "$SOURCE_DIR/schemas" ]]; then
+        echo -e "${RED}✗${NC} Pacchetto scaricato incompleto" >&2
+        return 1
+    fi
+    return 0
+}
+
+# ── Nome file agente per piattaforma ─────────────────────────────────────────
+# OpenCode usa un filename lowercase senza punti.
+
+agent_dest_filename() {
+    local short_name="$1" platform="$2" filename="$3"
+    if [[ "$platform" == "opencode" ]]; then
+        echo "$(echo "$short_name" | tr '[:upper:]' '[:lower:]').md"
+    else
+        echo "$filename"
+    fi
+}
+
+# ── Installa il pacchetto runtime (references/schemas/examples) ──────────────
+# Copia whitelist per directory: gli asset sono condivisi e idempotenti.
+# directory non gestita da noi viene rifiutata invece che sovrascritta.
+
+install_package_assets() {
+    local target_dir="$1"
+
+    if [[ -z "${SOURCE_DIR:-}" || ! -d "$SOURCE_DIR/references" ]]; then
+        echo -e "${RED}✗${NC} Sorgente del pacchetto non disponibile" >&2
+        return 1
+    fi
+
+    local asset
+    for asset in "${PACKAGE_ASSET_DIRS[@]}"; do
+        [[ -d "$SOURCE_DIR/$asset" ]] || continue
+        if [[ -e "$target_dir/$asset" && ! -f "$target_dir/$PACKAGE_MARKER" ]]; then
+            echo -e "${RED}✗${NC} Directory non gestita già presente: $target_dir/$asset" >&2
+            return 1
+        fi
+        rm -rf "$target_dir/$asset"
+        cp -R "$SOURCE_DIR/$asset" "$target_dir/$asset" || {
+            echo -e "${RED}✗${NC} Copia di $asset fallita in $target_dir" >&2
+            return 1
+        }
+    done
+
+    printf 'anubis-package v%s\n' "$ANUBIS_VERSION" > "$target_dir/$PACKAGE_MARKER"
+    return 0
+}
+
+# ── Verifica post-installazione ──────────────────────────────────────────────
+# Elenca <target_dir> [dest_filename...]: verifica gli agenti attesi e tutti i
+# file runtime obbligatori. Ritorna 1 (installazione rotta) se manca qualcosa.
+
+verify_installation() {
+    local target_dir="$1"
+    shift
+
+    local missing=0 f
+    for f in "$@"; do
+        if [[ ! -s "$target_dir/$f" ]]; then
+            echo -e "  ${RED}✗${NC} File agente mancante o vuoto: $f" >&2
+            missing=1
+        fi
+    done
+    for f in "${REQUIRED_RUNTIME_FILES[@]}"; do
+        if [[ ! -s "$target_dir/$f" ]]; then
+            echo -e "  ${RED}✗${NC} File runtime mancante o vuoto: $f" >&2
+            missing=1
+        fi
+    done
+
+    if [[ "$missing" -ne 0 ]]; then
+        echo -e "  ${RED}✗${NC} Verifica installazione fallita in $target_dir" >&2
+        return 1
+    fi
+    return 0
+}
+
+# ── Installa agenti + pacchetto runtime in una directory ─────────────────────
+# install_dir <dir> <agent_name> <filter>
+
+install_dir() {
+    local target_dir="$1"
+    local agent_name="$2"
+    local agent_filter="${3:-all}"
+
+    mkdir -p "$target_dir"
+    local platform
+    platform=$(get_platform "$agent_name")
+
+    local expected=()
+    if [[ "$agent_filter" == "all" || "$agent_filter" == "anubis" ]]; then
+        if install_one_agent "$target_dir" "$agent_name" "anubis"; then
+            expected+=("$(agent_dest_filename "$ANUBIS_SHORT_NAME" "$platform" "$ANUBIS_FILE")")
+        else
+            return 1
+        fi
+    fi
+    if [[ "$agent_filter" == "all" || "$agent_filter" == "devops" ]]; then
+        if install_one_agent "$target_dir" "$agent_name" "devops"; then
+            expected+=("$(agent_dest_filename "$DEVOPS_SHORT_NAME" "$platform" "$DEVOPS_FILE")")
+        else
+            return 1
+        fi
+    fi
+
+    install_package_assets "$target_dir" || return 1
+    verify_installation "$target_dir" "${expected[@]}" || return 1
+    return 0
+}
 
 
 # ── Frontmatter per piattaforma ──────────────────────────────────────────────
@@ -307,34 +506,6 @@ install_one_agent() {
     fi
 }
 
-# ── Installa entrambi gli agenti in una directory ────────────────────────────
-install_agent() {
-    local target_dir="$1"
-    local agent_name="$2"
-    local agent_filter="${3:-all}"  # anubis | devops | all
-
-    local success=0
-    local failed=0
-
-    if [[ "$agent_filter" == "all" || "$agent_filter" == "anubis" ]]; then
-        if install_one_agent "$target_dir" "$agent_name" "anubis"; then
-            ((success++)) || true
-        else
-            ((failed++)) || true
-        fi
-    fi
-
-    if [[ "$agent_filter" == "all" || "$agent_filter" == "devops" ]]; then
-        if install_one_agent "$target_dir" "$agent_name" "devops"; then
-            ((success++)) || true
-        else
-            ((failed++)) || true
-        fi
-    fi
-
-    return $failed
-}
-
 # ── Uninstall ────────────────────────────────────────────────────────────────
 uninstall_agent() {
     local target_dir="$1"
@@ -366,7 +537,17 @@ uninstall_agent() {
         echo -e "  ${YELLOW}○${NC} Nessun Anubis-devops presente per ${agent_name}"
     fi
 
-    # Rimuovi i file agent
+    # Rimuovi il pacchetto runtime, solo se è stato installato da noi (marker).
+    if [[ -f "$target_dir/$PACKAGE_MARKER" ]]; then
+        local asset
+        for asset in "${PACKAGE_ASSET_DIRS[@]}"; do
+            if [[ -e "$target_dir/$asset" ]]; then
+                rm -rf "$target_dir/$asset"
+                echo -e "  ${GREEN}✓${NC} Pacchetto $asset/ rimosso da ${BOLD}${agent_name}${NC}"
+            fi
+        done
+        rm -f "$target_dir/$PACKAGE_MARKER"
+    fi
 }
 
 # ── Local Install ────────────────────────────────────────────────────────────
@@ -377,37 +558,12 @@ install_local() {
 
     mkdir -p "$dest_dir"
 
-    if [[ "$agent_filter" == "all" || "$agent_filter" == "anubis" ]]; then
-        local dest="${dest_dir}/${ANUBIS_FILE}"
-        {
-            get_frontmatter "claude" "$ANUBIS_SHORT_NAME" "$ANUBIS_DESCRIPTION"
-            echo ""
-            get_agent_body "anubis"
-        } > "$dest"
-
-        if [[ -s "$dest" ]]; then
-            echo -e "  ${GREEN}✓${NC} ${ANUBIS_SHORT_NAME} installato localmente"
-            echo -e "          → ${dest}"
-        else
-            echo -e "  ${RED}✗${NC} Installazione locale fallita per ${ANUBIS_FILE}"
-        fi
+    if ! install_dir "$dest_dir" "Claude Code" "$agent_filter"; then
+        echo -e "  ${RED}✗${NC} Installazione locale fallita in ${dest_dir}" >&2
+        return 1
     fi
-
-    if [[ "$agent_filter" == "all" || "$agent_filter" == "devops" ]]; then
-        local dest="${dest_dir}/${DEVOPS_FILE}"
-        {
-            get_frontmatter "claude" "$DEVOPS_SHORT_NAME" "$DEVOPS_DESCRIPTION"
-            echo ""
-            get_agent_body "devops"
-        } > "$dest"
-
-        if [[ -s "$dest" ]]; then
-            echo -e "  ${GREEN}✓${NC} ${DEVOPS_SHORT_NAME} installato localmente"
-            echo -e "          → ${dest}"
-        else
-            echo -e "  ${RED}✗${NC} Installazione locale fallita per ${DEVOPS_FILE}"
-        fi
-    fi
+    echo -e "  ${GREEN}✓${NC} Pacchetto Anubis installato localmente (agenti + references/ + schemas/)"
+    echo -e "          → ${dest_dir}"
 
     # Crea/aggiorna settings.json Claude Code con entrambi gli agenti
     local settings="${local_dir}/.claude/settings.json"
@@ -440,10 +596,11 @@ check_connectivity() {
 
 # ── Help ─────────────────────────────────────────────────────────────────────
 print_help() {
-    echo "Uso: $0 [--local] [--agent <name>] [--suite <type>] [--backup] [--uninstall] [--help]"
+    echo "Uso: $0 [--local] [--dest DIR] [--agent <name>] [--suite <type>] [--backup] [--uninstall] [--help]"
     echo ""
     echo "Opzioni:"
     echo "  --local              Installa solo nella directory corrente"
+    echo "  --dest <dir>         Installa in una directory specifica (per test/automazione)"
     echo "  --agent <name>       Installa solo per un agent specifico (claude, opencode, ...)"
     echo "  --suite <type>       Installa solo Anubis (anubis) o solo Anubis-devops (devops)"
     echo "  --backup             Crea backup dei file agent esistenti prima di sovrascrivere"
@@ -479,6 +636,7 @@ main() {
     local mode="install"
     local target_agent=""
     local suite_filter="all"    # anubis | devops | all
+    local dest_dir=""
     DO_BACKUP="false"
 
     # Parse arguments
@@ -491,6 +649,15 @@ main() {
             --local)
                 mode="local"
                 shift
+                ;;
+            --dest)
+                dest_dir="${2:-}"
+                if [[ -z "$dest_dir" ]]; then
+                    echo -e "${RED}✗${NC} Specifica una directory: --dest <dir>"
+                    exit 1
+                fi
+                mode="dest"
+                shift 2
                 ;;
             --backup)
                 DO_BACKUP="true"
@@ -524,6 +691,30 @@ main() {
         esac
     done
 
+    # ── Sorgente del pacchetto runtime ───────────────────────────────────
+    if [[ "$mode" == "local" || "$mode" == "dest" || "$mode" == "install" ]]; then
+        if ! fetch_package_source; then
+            echo -e "${RED}✗${NC} Impossibile preparare il pacchetto runtime (references/ · schemas/)."
+            exit 1
+        fi
+    fi
+
+    # ── Modalità: Dest (directory esplicita, per test/automazione) ───────
+    if [[ "$mode" == "dest" ]]; then
+        echo -e "${BOLD}Installazione in directory:${NC} ${dest_dir}"
+        echo -e "  Sorgente pacchetto: ${SOURCE_DIR}"
+        echo ""
+        if install_dir "$dest_dir" "Generic" "$suite_filter"; then
+            echo ""
+            echo -e "${GREEN}${BOLD}✓${NC} Installazione completata e verificata in ${dest_dir}"
+            exit 0
+        else
+            echo ""
+            echo -e "${RED}${BOLD}✗${NC} Installazione fallita in ${dest_dir}"
+            exit 1
+        fi
+    fi
+
     # ── Modalità: Local ──────────────────────────────────────────────────
     if [[ "$mode" == "local" ]]; then
         if [[ -n "$target_agent" ]]; then
@@ -531,9 +722,13 @@ main() {
         fi
         echo -e "${BOLD}Installazione locale di Anubis Suite${NC}"
         echo ""
-        install_local "$PWD" "$suite_filter"
+        if ! install_local "$PWD" "$suite_filter"; then
+            echo ""
+            echo -e "${RED}${BOLD}✗${NC} Installazione locale fallita."
+            exit 1
+        fi
         echo ""
-        echo -e "${GREEN}${BOLD}✓${NC} Installazione locale completata!"
+        echo -e "${GREEN}${BOLD}✓${NC} Installazione locale completata e verificata!"
         echo ""
         echo "  Agenti disponibili:"
         if [[ "$suite_filter" == "all" || "$suite_filter" == "anubis" ]]; then
@@ -575,30 +770,25 @@ main() {
     fi
 
     local installed=0
-    local skipped=0
-    local agents_to_install=("anubis" "devops")
-
-    if [[ "$suite_filter" == "anubis" ]]; then
-        agents_to_install=("anubis")
-    elif [[ "$suite_filter" == "devops" ]]; then
-        agents_to_install=("devops")
-    fi
+    local failed=0
 
     while IFS='|' read -r dir name; do
         [[ -z "$dir" ]] && continue
-        for agent in "${agents_to_install[@]}"; do
-            if install_agent "$dir" "$name" "$agent"; then
-                installed=$((installed + 1))
-            else
-                skipped=$((skipped + 1))
-            fi
-        done
+        if install_dir "$dir" "$name" "$suite_filter"; then
+            installed=$((installed + 1))
+        else
+            failed=$((failed + 1))
+        fi
     done < <(get_agent_dirs "$target_agent")
 
     echo ""
-    echo -e "${GREEN}${BOLD}✓${NC} Completato: ${installed} installazioni, ${skipped} saltati"
+    if [[ "$failed" -eq 0 ]]; then
+        echo -e "${GREEN}${BOLD}✓${NC} Completato: ${installed} directory installate e verificate, 0 fallite"
+    else
+        echo -e "${RED}${BOLD}✗${NC} Completato con errori: ${installed} installate, ${failed} fallite"
+    fi
 
-    if [[ -z "$target_agent" && $installed -eq 0 ]]; then
+    if [[ -z "$target_agent" && $installed -eq 0 && $failed -eq 0 ]]; then
         echo ""
         echo -e "${YELLOW}${BOLD}⚠${NC} Nessun coding agent rilevato sul sistema."
         echo ""
@@ -615,6 +805,10 @@ main() {
 
     echo ""
     echo -e "${CYAN}${BOLD}Anubis Suite${NC} — .NET Code Review + DevOps Security. ${BOLD}Ready.${NC}"
+
+    if [[ "$failed" -ne 0 ]]; then
+        exit 1
+    fi
 }
 
 main "$@"

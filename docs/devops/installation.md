@@ -50,7 +50,7 @@ cat >> ~/.copilot/config.json << 'EOF'
     "Anubis-devops": {
       "path": "~/.copilot/agents/Anubis-devops.agent.md",
       "enabled": true,
-      "model": "claude-3-5-sonnet"
+      "model": "<your-available-model>"
     }
   }
 }
@@ -88,10 +88,14 @@ copilot task Anubis-devops --prompt "Scan this pipeline for secrets..."
 
 ### Model compatibility error
 
-If `claude-3-5-sonnet` is unavailable:
-1. Edit `~/.copilot/agents/Anubis-devops.agent.md`
-2. Change line 2: `#model: "claude-3-5-sonnet"` → `#model: "your-available-model"`
+Anubis-devops is model/provider-independent. It requires no specific LLM; use
+whichever model your platform exposes.
+1. Edit `~/.copilot/agents/Anubis-devops.agent.md` if you need an explicit model
+2. Set `#model: "<your-available-model>"` to a model available on your platform
 3. Reload: `copilot config reload`
+
+For full audits prefer a reasoning-capable, large-context model; for targeted
+quick scans a lightweight model is sufficient.
 
 ### Very slow first run
 

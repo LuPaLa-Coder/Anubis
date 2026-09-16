@@ -155,7 +155,8 @@ Profile for:
 ..."
 ```
 
-> **Note**: Anubis-devops, Anubis-Runtime, and Anubis-Arch are companion agents available in the same repository.
+> **Note**: **Anubis-devops** is part of this repository. **Anubis-Runtime**
+> and **Anubis-Arch** are planned agents and are not yet implemented here.
 
 ## Input Schema
 

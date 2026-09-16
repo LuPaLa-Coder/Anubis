@@ -14,8 +14,8 @@ copilot task Anubis-devops --prompt "Audit this pipeline..."
 # With file input
 copilot task Anubis-devops < azure-pipelines.yml
 
-# With configuration override
-copilot task Anubis-devops --model claude-3-5-sonnet --prompt "..."
+# With configuration override (use a model available on your platform)
+copilot task Anubis-devops --model "<your-available-model>" --prompt "..."
 ```
 
 ### Via GitHub Copilot Chat (if available)
@@ -334,8 +334,8 @@ Based on pipeline security findings from Anubis-devops:
 Edit `~/.copilot/agents/Anubis-devops.agent.md` to customize:
 
 ```yaml
-# Model override
-#model: "claude-3-5-sonnet"
+# Model override (optional; model/provider-independent)
+#model: "<your-available-model>"
 
 # Compliance frameworks to check
 # #compliance: "SOC2,PCI-DSS,ISO27001"
@@ -351,7 +351,7 @@ Command-line overrides:
 
 ```bash
 copilot task Anubis-devops \
-  --model claude-3-5-sonnet \
+  --model "<your-available-model>" \
   --prompt "..." \
   --config '{"min_severity": "high", "compliance": "SOC2,PCI-DSS"}'
 ```

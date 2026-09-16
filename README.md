@@ -133,8 +133,9 @@ agente`).
 ## Support & Contacts
 
 - **Issues & Feedback**: [GitHub Issues](https://github.com/LuPaLa-Coder/anubis/issues)
-- **Related Agents**: Anubis-devops (pipeline security), Anubis-Runtime (performance),
-  Anubis-Arch (architecture governance)
+- **Related Agents**: **Anubis-devops** (pipeline security) è parte di questo
+  repository; **Anubis-Runtime**, **Anubis-Arch** e **Anubis-GreenOps** sono
+  pianificati (vedi [Planned Agents](#planned-agents)).
 
 ---
 
@@ -144,7 +145,23 @@ agente`).
 - Security review di sorgente
 
 **Quando usare un altro agent:**
-- Focus su **pipeline Azure DevOps YAML** → usa **Anubis-devops**
-- Focus su **performance runtime e optimization** → usa **Anubis-Runtime**
-- Focus su **governance architetturale e compliance** → usa **Anubis-Arch**
-- Focus su **cost/carbon footprint** → usa **Anubis-GreenOps**
+- Focus su **pipeline Azure DevOps YAML** → usa **Anubis-devops** (incluso in
+  questo repository)
+- Focus su **performance runtime e optimization** → *Anubis-Runtime* (pianificato)
+- Focus su **governance architetturale e compliance** → *Anubis-Arch* (pianificato)
+- Focus su **cost/carbon footprint** → *Anubis-GreenOps* (pianificato)
+
+## Planned Agents
+
+I seguenti agenti **non sono ancora implementati** in questo repository: sono
+parte della roadmap e non vanno considerati componenti disponibili.
+
+| Agent | Stato | Focus previsto |
+| --- | --- | --- |
+| Anubis-devops | ✅ implementato in questo repository | security di pipeline YAML Azure DevOps |
+| Anubis-Runtime | 🗺️ pianificato | performance runtime, profiling, ottimizzazione |
+| Anubis-Arch | 🗺️ pianificato | governance architetturale e compliance |
+| Anubis-GreenOps | 🗺️ pianificato | cost/carbon footprint |
+
+Solo `Anubis` e `Anubis-devops` sono oggi installabili e documentati in questo
+repository.
