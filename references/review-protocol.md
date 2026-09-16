@@ -1,6 +1,7 @@
 # Review Protocol
 
-Shared contract for the Anubis agent suite (`Anubis` and `Anubis-devops`).
+Shared contract for the Anubis agent suite (`Anubis`, `Anubis-devops`,
+`Anubis-Arch`, `Anubis-Runtime`, `Anubis-GreenOps`).
 
 This document is **normative**. Both skills inherit it. A skill may narrow the
 protocol (defined in its own Scope/Non-Scope) but must not contradict it.
@@ -254,7 +255,8 @@ metrics:
 
 ```yaml
 handoff:
-  target:           # anubis | anubis-devops | human | none
+  target:           # anubis | anubis-devops | anubis-arch | anubis-runtime |
+                     # anubis-greenops | human | none
   reason:           # short reason
   findings:         # finding ids or short descriptors being transferred
   files:            # artifacts the next agent must read
@@ -294,6 +296,40 @@ IDs are stable and never recomputed from severity or order.
 | `AZDO-SUPPLY` | supply chain, tasks, artifacts, images |
 | `AZDO-PIPELINE` | pipeline structure, governance, environments |
 
+### Anubis-Arch (architecture governance) families
+
+| Prefix | Family |
+| --- | --- |
+| `ARCH-LAYER` | layer isolation, back-reference, circular dependency |
+| `ARCH-DEP` | dependency drift, version proliferation, transitive risk |
+| `ARCH-LIC` | license compliance |
+| `ARCH-DEBT` | complexity vs architecture correlation |
+
+### Anubis-Runtime (runtime performance) families
+
+| Prefix | Family |
+| --- | --- |
+| `RT-N1` | N+1 query pattern confirmed by trace/profiling |
+| `RT-ASYNC` | async/await inefficiency, thread pool |
+| `RT-LOCK` | lock contention, deadlock risk |
+| `RT-MEM` | memory leak, GC pressure, allocations (runtime-confirmed) |
+| `RT-CRAP` | CRAP score / latency correlation on hot path |
+
+### Anubis-GreenOps (sustainability) families
+
+| Prefix | Family |
+| --- | --- |
+| `GRN-CARBON` | carbon footprint estimation |
+| `GRN-COST` | cloud cost waste |
+| `GRN-PROV` | over/under-provisioning, sizing |
+| `GRN-REGION` | regional energy mix / geography |
+| `GRN-PATTERN` | green pattern absent (auto-shutdown, RI/spot, tiering) |
+
+`ARCH-*`, `RT-*` and `GRN-*` are a **first assignment**: Anubis-Arch,
+Anubis-Runtime and Anubis-GreenOps had no formal finding IDs before this
+extension, so there is no legacy ID to preserve or map for these three
+families.
+
 Legacy DevOps IDs `AZDO-SEC001`…`AZDO-SEC042` are **preserved verbatim**.
 Their family is recorded per rule; the canonical dashed form (e.g.
 `AZDO-SEC-001`) is a documented alias, not a replacement. See
@@ -326,3 +362,21 @@ Both skills end their run with the shared output contract:
 Model independence: the protocol must not require a specific LLM. Capability
 labels are used instead — `lightweight model`, `reasoning-capable model`,
 `large-context model`.
+
+---
+
+## 13. Agent interoperability matrix
+
+Single source of truth for cross-agent routing. Every skill's `## Handoff`
+section links here instead of redefining this table.
+
+| Agent | Input minimo | Output minimo | Next agent tipico |
+| --- | --- | --- | --- |
+| `Anubis` | codice .NET, architettura, obiettivo review | finding applicativi, severity, refactoring | `Anubis-devops` / `Anubis-Arch` / `Anubis-Runtime` / `human` |
+| `Anubis-devops` | YAML pipeline, contesto applicativo | finding pipeline, remediation, security score | `Anubis` / `Anubis-Arch` / `Anubis-GreenOps` / `human` |
+| `Anubis-Arch` | codebase, `.sln`/`.csproj`, NuGet config, blueprint | NetArchTest rules, SBOM, compliance matrix, refactoring plan | `Anubis` / `Anubis-Runtime` / `Anubis-GreenOps` / `Anubis-devops` / `human` |
+| `Anubis-Runtime` | tracce OpenTelemetry, codice sorgente, baseline | trace analysis, N+1 detection, refactoring + impact metrics | `Anubis` / `Anubis-Arch` / `Anubis-GreenOps` / `Anubis-devops` / `human` |
+| `Anubis-GreenOps` | IaC (Bicep/Terraform), metriche Azure, baseline | carbon footprint, cost analysis, refactoring IaC, ROI | `Anubis-devops` / `Anubis` / `Anubis-Arch` / `Anubis-Runtime` / `human` |
+
+Handoff happens only when another specialist is actually required (§10).
+`target: none` remains a valid, explicit outcome for every agent.

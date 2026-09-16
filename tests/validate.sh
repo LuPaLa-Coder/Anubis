@@ -41,7 +41,7 @@ say ""
 printf '\033[1mReference validation (root: %s)\033[0m\n' "$ROOT"
 
 SKILL_FILES=()
-for f in Anubis.agent.md Anubis.devops.md; do
+for f in Anubis.agent.md Anubis.devops.md Anubis.Arch.md Anubis.Runtime.md Anubis.GreenOps.md; do
   [[ -f "$f" ]] && SKILL_FILES+=("$f")
 done
 

@@ -1,19 +1,22 @@
 #!/usr/bin/env bash
 # =============================================================================
-#  Anubis Agent Suite — Global Installer v1.2
-#  Installa Anubis (.NET) e Anubis-devops (Azure DevOps) per tutti i
-#  coding agent rilevati con frontmatter nativo:
-#  Claude Code · OpenCode · GitHub Copilot · Cursor · Windsurf · Codex
+#  Anubis Agent Suite — Global Installer v1.3
+#  Installa Anubis, Anubis-devops, Anubis-Arch, Anubis-Runtime e
+#  Anubis-GreenOps per tutti i coding agent rilevati con frontmatter
+#  nativo: Claude Code · OpenCode · GitHub Copilot · Cursor · Windsurf · Codex
 #
-#  Ogni installazione include il pacchetto runtime completo:
-#    Anubis.agent.md · Anubis.devops.md · references/ · schemas/ · examples/
+#  Ogni installazione include gli agenti della suite (skill .md) più il
+#  pacchetto runtime completo: references/ · schemas/ · examples/
 #
 #  Uso:
 #    curl -fsSL https://raw.githubusercontent.com/LuPaLa-Coder/anubis/main/install.sh | bash
 #    ./install.sh                                  # installa tutta la suite
-#    ./install.sh --agent anubis                   # solo Anubis (.NET)
-#    ./install.sh --agent devops                   # solo Anubis-devops
-#    ./install.sh --agent claude                   # solo per Claude Code
+#    ./install.sh --suite anubis                    # solo Anubis (.NET)
+#    ./install.sh --suite devops                     # solo Anubis-devops
+#    ./install.sh --suite arch                       # solo Anubis-Arch
+#    ./install.sh --suite runtime                    # solo Anubis-Runtime
+#    ./install.sh --suite greenops                   # solo Anubis-GreenOps
+#    ./install.sh --agent claude                    # solo per Claude Code
 #    ./install.sh --local                          # installa nella directory corrente
 #    ./install.sh --dest DIR                       # installa in una directory specifica
 #    ./install.sh --backup                         # backup dei file esistenti
@@ -27,7 +30,7 @@ RED='\033[0;31m'   GREEN='\033[0;32m'   YELLOW='\033[1;33m'
 CYAN='\033[0;36m'  BOLD='\033[1m'      NC='\033[0m'
 
 # ── Configurazione ───────────────────────────────────────────────────────────
-ANUBIS_VERSION="1.2.0"
+ANUBIS_VERSION="1.3.0"
 REPO_URL="https://raw.githubusercontent.com/LuPaLa-Coder/anubis/main"
 REPO_TARBALL="https://github.com/LuPaLa-Coder/anubis/archive/refs/heads/main.tar.gz"
 
@@ -45,6 +48,11 @@ REQUIRED_RUNTIME_FILES=(
     "references/testing.md"
     "references/msbuild.md"
     "references/azure-devops-rules.md"
+    "references/architecture-governance.md"
+    "references/netarchtest-rules.md"
+    "references/sbom.md"
+    "references/runtime-performance.md"
+    "references/sustainability.md"
     "schemas/finding.schema.json"
     "schemas/review.schema.json"
     "schemas/handoff.schema.json"
@@ -65,25 +73,82 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# ── Agente 1: Anubis (.NET) ──────────────────────────────────────────────────
-ANUBIS_FILE="Anubis.agent.md"
-ANUBIS_DESCRIPTION='Anubis .NET Agent — review tecnica strutturata di codice .NET con severity condivisa, refactoring concreti e handoff verso DevSecOps e delivery'
-ANUBIS_SHORT_NAME="Anubis"
-_BODY_ANUBIS=""
+# ── Registro agenti della suite ──────────────────────────────────────────────
+# Array paralleli indicizzati per posizione (compatibile bash 3.2 / macOS
+# default): AGENT_IDS[i] descrive AGENT_FILE[i] / AGENT_SHORT_NAME[i] / ecc.
+# Aggiungere un agente = aggiungere un elemento a ciascun array, nessun'altra
+# modifica strutturale è richiesta altrove nello script.
+AGENT_IDS=(anubis devops arch runtime greenops)
 
-# ── Agente 2: Anubis-devops (Azure DevOps) ───────────────────────────────────
-DEVOPS_FILE="Anubis.devops.md"
-DEVOPS_DESCRIPTION='Anubis-devops Agent — analisi security di pipeline YAML Azure DevOps con severity condivisa, mapping CWE, remediation concrete (split YAML/Infra/Code), Security Score formalizzato e handoff verso Anubis'
-DEVOPS_SHORT_NAME="Anubis-devops"
-_BODY_DEVOPS=""
+AGENT_FILE=(
+    "Anubis.agent.md"
+    "Anubis.devops.md"
+    "Anubis.Arch.md"
+    "Anubis.Runtime.md"
+    "Anubis.GreenOps.md"
+)
+
+AGENT_SHORT_NAME=(
+    "Anubis"
+    "Anubis-devops"
+    "Anubis-Arch"
+    "Anubis-Runtime"
+    "Anubis-GreenOps"
+)
+
+# Nome file per OpenCode (lowercase, senza punti).
+AGENT_OPENCODE_NAME=(
+    "anubis"
+    "anubis-devops"
+    "anubis-arch"
+    "anubis-runtime"
+    "anubis-greenops"
+)
+
+# Descrizione completa usata nel frontmatter dell'agente installato.
+AGENT_DESCRIPTION=(
+    'Anubis .NET Agent — review tecnica strutturata di codice .NET con severity condivisa, refactoring concreti e handoff verso DevSecOps e delivery'
+    'Anubis-devops Agent — analisi security di pipeline YAML Azure DevOps con severity condivisa, mapping CWE, remediation concrete (split YAML/Infra/Code), Security Score formalizzato e handoff verso Anubis'
+    'Anubis-Arch Agent — governance architetturale .NET con NetArchTest rule generation, dependency graph analysis, license compliance e SBOM generation'
+    'Anubis-Runtime Agent — analisi performance .NET con OpenTelemetry, N+1 detection, CRAP-Performance correlation e thread analysis'
+    'Anubis-GreenOps Agent — analisi sostenibilità cloud e cost optimization per Azure con carbon footprint estimation, resource over-provisioning detection, green patterns'
+)
+
+# Descrizione breve usata in .claude/settings.json (installazione locale).
+AGENT_SETTINGS_DESCRIPTION=(
+    "Anubis .NET Agent — review tecnica strutturata di codice .NET"
+    "Anubis-devops Agent — analisi security pipeline YAML Azure DevOps"
+    "Anubis-Arch Agent — governance architetturale, dipendenze, licenze, SBOM"
+    "Anubis-Runtime Agent — performance runtime .NET, OpenTelemetry, N+1, lock contention"
+    "Anubis-GreenOps Agent — sostenibilità cloud Azure, carbon footprint, cost optimization"
+)
+
+# Cache del body per agente (indicizzata come AGENT_IDS).
+_BODY_CACHE=()
+
+# Risolve l'indice di un agent_type in AGENT_IDS. Stampa l'indice ed esce 0
+# se trovato, altrimenti non stampa nulla ed esce 1.
+agent_index() {
+    local id="$1" i
+    for i in "${!AGENT_IDS[@]}"; do
+        if [[ "${AGENT_IDS[$i]}" == "$id" ]]; then
+            echo "$i"
+            return 0
+        fi
+    done
+    return 1
+}
 
 # ── Banner ───────────────────────────────────────────────────────────────────
 print_banner() {
     echo -e "${CYAN}${BOLD}"
     echo "  ⚖️  Anubis Agent Suite — Global Installer v${ANUBIS_VERSION}"
     echo -e "${NC}"
-    echo "  ● Anubis        — Senior Code Reviewer .NET 8+"
-    echo "  ● Anubis-devops — Azure DevOps Pipeline Security"
+    echo "  ● Anubis          — Senior Code Reviewer .NET 8+"
+    echo "  ● Anubis-devops   — Azure DevOps Pipeline Security"
+    echo "  ● Anubis-Arch     — Architecture Governance & Dependencies"
+    echo "  ● Anubis-Runtime  — Runtime Performance & OpenTelemetry"
+    echo "  ● Anubis-GreenOps — Cloud Sustainability & Cost Optimization"
     echo ""
 }
 
@@ -99,27 +164,23 @@ detect_os() {
 
 # ── Agent Body ──────────────────────────────────────────────────────────────
 # Estrae il corpo dell'agente (tutto dopo il frontmatter YAML) dal file sorgente.
-# Argomenti: anubis | devops
+# Argomenti: uno degli id in AGENT_IDS (anubis | devops | arch | runtime | greenops)
 
 get_agent_body() {
     local agent_type="${1:-anubis}"
+    local idx
+    idx=$(agent_index "$agent_type") || {
+        echo -e "${RED}✗${NC} Agent sconosciuto: $agent_type" >&2
+        return 1
+    }
 
     # Cache lookup
-    if [[ "$agent_type" == "devops" && -n "$_BODY_DEVOPS" ]]; then
-        echo "$_BODY_DEVOPS"
-        return 0
-    fi
-    if [[ "$agent_type" == "anubis" && -n "$_BODY_ANUBIS" ]]; then
-        echo "$_BODY_ANUBIS"
+    if [[ -n "${_BODY_CACHE[$idx]:-}" ]]; then
+        echo "${_BODY_CACHE[$idx]}"
         return 0
     fi
 
-    # Determina nome file
-    local agent_filename
-    case "$agent_type" in
-        devops) agent_filename="$DEVOPS_FILE" ;;
-        *)      agent_filename="$ANUBIS_FILE" ;;
-    esac
+    local agent_filename="${AGENT_FILE[$idx]}"
 
     local src=""
     if [[ -n "${SOURCE_DIR:-}" && -f "$SOURCE_DIR/$agent_filename" ]]; then
@@ -156,11 +217,7 @@ get_agent_body() {
     ')
 
     # Salva in cache
-    if [[ "$agent_type" == "devops" ]]; then
-        _BODY_DEVOPS="$body"
-    else
-        _BODY_ANUBIS="$body"
-    fi
+    _BODY_CACHE[$idx]="$body"
 
     # Pulizia se è stato scaricato in tmp (non cancellare la sorgente locale).
     if [[ "$src" != "$SCRIPT_DIR/$agent_filename" ]] && \
@@ -309,20 +366,16 @@ install_dir() {
     platform=$(get_platform "$agent_name")
 
     local expected=()
-    if [[ "$agent_filter" == "all" || "$agent_filter" == "anubis" ]]; then
-        if install_one_agent "$target_dir" "$agent_name" "anubis"; then
-            expected+=("$(agent_dest_filename "$ANUBIS_SHORT_NAME" "$platform" "$ANUBIS_FILE")")
+    local id idx
+    for id in "${AGENT_IDS[@]}"; do
+        [[ "$agent_filter" == "all" || "$agent_filter" == "$id" ]] || continue
+        if install_one_agent "$target_dir" "$agent_name" "$id"; then
+            idx=$(agent_index "$id")
+            expected+=("$(agent_dest_filename "${AGENT_SHORT_NAME[$idx]}" "$platform" "${AGENT_FILE[$idx]}")")
         else
             return 1
         fi
-    fi
-    if [[ "$agent_filter" == "all" || "$agent_filter" == "devops" ]]; then
-        if install_one_agent "$target_dir" "$agent_name" "devops"; then
-            expected+=("$(agent_dest_filename "$DEVOPS_SHORT_NAME" "$platform" "$DEVOPS_FILE")")
-        else
-            return 1
-        fi
-    fi
+    done
 
     install_package_assets "$target_dir" || return 1
     verify_installation "$target_dir" "${expected[@]}" || return 1
@@ -447,7 +500,7 @@ get_agent_dirs() {
 }
 
 # ── Installa un singolo agente ──────────────────────────────────────────────
-# agent_type: anubis | devops
+# agent_type: uno degli id in AGENT_IDS (anubis | devops | arch | runtime | greenops)
 
 install_one_agent() {
     local target_dir="$1"
@@ -456,27 +509,22 @@ install_one_agent() {
     local platform
     platform=$(get_platform "$agent_name")
 
-    # Variabili specifiche per tipo agente
-    local short_name description filename body
-    case "$agent_type" in
-        devops)
-            short_name="$DEVOPS_SHORT_NAME"
-            description="$DEVOPS_DESCRIPTION"
-            filename="$DEVOPS_FILE"
-            body=$(get_agent_body "devops") || return 1
-            ;;
-        *)
-            short_name="$ANUBIS_SHORT_NAME"
-            description="$ANUBIS_DESCRIPTION"
-            filename="$ANUBIS_FILE"
-            body=$(get_agent_body "anubis") || return 1
-            ;;
-    esac
+    local idx
+    idx=$(agent_index "$agent_type") || {
+        echo -e "${RED}✗${NC} Agent sconosciuto: $agent_type" >&2
+        return 1
+    }
+
+    local short_name="${AGENT_SHORT_NAME[$idx]}"
+    local description="${AGENT_DESCRIPTION[$idx]}"
+    local filename="${AGENT_FILE[$idx]}"
+    local body
+    body=$(get_agent_body "$agent_type") || return 1
 
     # Per OpenCode il filename segue convenzione lowercase senza punti
     local dest_filename="$filename"
     if [[ "$platform" == "opencode" ]]; then
-        dest_filename="$(echo "$short_name" | tr '[:upper:]' '[:lower:]').md"
+        dest_filename="${AGENT_OPENCODE_NAME[$idx]}.md"
     fi
 
     mkdir -p "$target_dir"
@@ -513,29 +561,21 @@ uninstall_agent() {
     local platform
     platform=$(get_platform "$agent_name")
 
-    # Rimuovi Anubis (.NET)
-    local dest_anubis="${target_dir}/${ANUBIS_FILE}"
-    if [[ "$platform" == "opencode" ]]; then
-        dest_anubis="${target_dir}/anubis.md"
-    fi
-    if [[ -f "$dest_anubis" ]]; then
-        rm "$dest_anubis"
-        echo -e "  ${GREEN}✓${NC} Anubis rimosso da ${BOLD}${agent_name}${NC}"
-    else
-        echo -e "  ${YELLOW}○${NC} Nessun Anubis presente per ${agent_name}"
-    fi
-
-    # Rimuovi Anubis-devops
-    local dest_devops="${target_dir}/${DEVOPS_FILE}"
-    if [[ "$platform" == "opencode" ]]; then
-        dest_devops="${target_dir}/anubis-devops.md"
-    fi
-    if [[ -f "$dest_devops" ]]; then
-        rm "$dest_devops"
-        echo -e "  ${GREEN}✓${NC} Anubis-devops rimosso da ${BOLD}${agent_name}${NC}"
-    else
-        echo -e "  ${YELLOW}○${NC} Nessun Anubis-devops presente per ${agent_name}"
-    fi
+    local id idx short_name dest
+    for id in "${AGENT_IDS[@]}"; do
+        idx=$(agent_index "$id")
+        short_name="${AGENT_SHORT_NAME[$idx]}"
+        dest="${target_dir}/${AGENT_FILE[$idx]}"
+        if [[ "$platform" == "opencode" ]]; then
+            dest="${target_dir}/${AGENT_OPENCODE_NAME[$idx]}.md"
+        fi
+        if [[ -f "$dest" ]]; then
+            rm "$dest"
+            echo -e "  ${GREEN}✓${NC} ${short_name} rimosso da ${BOLD}${agent_name}${NC}"
+        else
+            echo -e "  ${YELLOW}○${NC} Nessun ${short_name} presente per ${agent_name}"
+        fi
+    done
 
     # Rimuovi il pacchetto runtime, solo se è stato installato da noi (marker).
     if [[ -f "$target_dir/$PACKAGE_MARKER" ]]; then
@@ -565,24 +605,21 @@ install_local() {
     echo -e "  ${GREEN}✓${NC} Pacchetto Anubis installato localmente (agenti + references/ + schemas/)"
     echo -e "          → ${dest_dir}"
 
-    # Crea/aggiorna settings.json Claude Code con entrambi gli agenti
+    # Crea/aggiorna settings.json Claude Code con gli agenti installati
     local settings="${local_dir}/.claude/settings.json"
     if [[ ! -f "$settings" ]]; then
-        cat > "$settings" <<'SETTINGS'
-{
-  "agents": {
-    "Anubis": {
-      "description": "Anubis .NET Agent — review tecnica strutturata di codice .NET",
-      "path": ".claude/agents/Anubis.agent.md"
-    },
-    "Anubis-devops": {
-      "description": "Anubis-devops Agent — analisi security pipeline YAML Azure DevOps",
-      "path": ".claude/agents/Anubis.devops.md"
-    }
-  }
-}
-SETTINGS
-        echo -e "  ${GREEN}✓${NC} Creato .claude/settings.json con registrazione agenti (Anubis + Anubis-devops)"
+        local entries="" id idx first=true
+        for id in "${AGENT_IDS[@]}"; do
+            [[ "$agent_filter" == "all" || "$agent_filter" == "$id" ]] || continue
+            idx=$(agent_index "$id")
+            if [[ "$first" == "true" ]]; then first=false; else entries+=","; fi
+            entries+=$'\n'"    \"${AGENT_SHORT_NAME[$idx]}\": {"
+            entries+=$'\n'"      \"description\": \"${AGENT_SETTINGS_DESCRIPTION[$idx]}\","
+            entries+=$'\n'"      \"path\": \".claude/agents/${AGENT_FILE[$idx]}\""
+            entries+=$'\n'"    }"
+        done
+        printf '{\n  "agents": {%s\n  }\n}\n' "$entries" > "$settings"
+        echo -e "  ${GREEN}✓${NC} Creato .claude/settings.json con registrazione agenti"
     fi
 }
 
@@ -616,12 +653,16 @@ print_help() {
     echo "  codex     — OpenAI Codex"
     echo ""
     echo "Suite agenti:"
-    echo "  anubis    — Anubis (.NET) — Senior Code Reviewer .NET 8+"
-    echo "  devops    — Anubis-devops — Azure DevOps Pipeline Security"
+    echo "  anubis    — Anubis          — Senior Code Reviewer .NET 8+"
+    echo "  devops    — Anubis-devops   — Azure DevOps Pipeline Security"
+    echo "  arch      — Anubis-Arch     — Architecture Governance & Dependencies"
+    echo "  runtime   — Anubis-Runtime  — Runtime Performance & OpenTelemetry"
+    echo "  greenops  — Anubis-GreenOps — Cloud Sustainability & Cost Optimization"
     echo ""
     echo "Esempi:"
     echo "  $0                                   # Installa tutta la suite"
     echo "  $0 --suite devops                    # Solo Anubis-devops"
+    echo "  $0 --suite arch                      # Solo Anubis-Arch"
     echo "  $0 --agent claude                    # Solo per Claude Code"
     echo "  $0 --suite anubis --local            # Solo Anubis in locale"
 }
@@ -731,12 +772,13 @@ main() {
         echo -e "${GREEN}${BOLD}✓${NC} Installazione locale completata e verificata!"
         echo ""
         echo "  Agenti disponibili:"
-        if [[ "$suite_filter" == "all" || "$suite_filter" == "anubis" ]]; then
-            echo "    • Anubis"
-        fi
-        if [[ "$suite_filter" == "all" || "$suite_filter" == "devops" ]]; then
-            echo "    • Anubis-devops"
-        fi
+        local id idx
+        for id in "${AGENT_IDS[@]}"; do
+            if [[ "$suite_filter" == "all" || "$suite_filter" == "$id" ]]; then
+                idx=$(agent_index "$id")
+                echo "    • ${AGENT_SHORT_NAME[$idx]}"
+            fi
+        done
         echo "  Per usarli: seleziona l'agente dal menu quando richiesto."
         exit 0
     fi
@@ -804,7 +846,7 @@ main() {
     fi
 
     echo ""
-    echo -e "${CYAN}${BOLD}Anubis Suite${NC} — .NET Code Review + DevOps Security. ${BOLD}Ready.${NC}"
+    echo -e "${CYAN}${BOLD}Anubis Suite${NC} — Code Review · DevOps Security · Architecture · Runtime · GreenOps. ${BOLD}Ready.${NC}"
 
     if [[ "$failed" -ne 0 ]]; then
         exit 1

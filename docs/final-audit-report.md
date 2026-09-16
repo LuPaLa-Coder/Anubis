@@ -17,6 +17,12 @@ Reviewed and (where required) changed:
 Out of scope: rewriting the architecture, renaming/removing rules, weakening
 tests.
 
+A follow-up pass (see **Extended Agents** below) applied the same
+architecture — operating contract + `references/` + shared protocol +
+schemas + examples + tests + installer integration — to
+`Anubis.Arch.md`, `Anubis.Runtime.md` and `Anubis.GreenOps.md`, which
+were previously monolithic and roadmap-only.
+
 ## Changes Made
 
 | File | Change |
@@ -125,15 +131,80 @@ SCHEMA TEST: PASS
 
 ## Known Limitations
 
-1. No automated LLM harness: `tests/anubis/*` and `tests/devops/*` remain
+1. No automated LLM harness: `tests/anubis/*`, `tests/devops/*`,
+   `tests/arch/*`, `tests/runtime/*` and `tests/greenops/*` remain
    specifications, not machine-executed assertions.
 2. The exact install layout (assets copied next to the agent files) is a
    documented convention; platforms that require a different resolution
    strategy may need an adapter.
-3. Anubis-Runtime / Anubis-Arch / Anubis-GreenOps are still roadmap items and
-   are not implemented in this repository.
-4. The `jsonschema` module is optional; without it meta-schema validation is
+3. The `jsonschema` module is optional; without it meta-schema validation is
    limited to JSON validity and `$ref` resolution (structural checks still run).
+4. `Anubis-azure` (Azure subscription security audit), referenced only as a
+   handoff/interoperability target by the other five skills, is not
+   implemented in this repository.
+
+## Extended Agents (Arch / Runtime / GreenOps)
+
+Follow-up pass bringing `Anubis-Arch`, `Anubis-Runtime` and
+`Anubis-GreenOps` to the same operating-contract architecture as
+`Anubis`/`Anubis-devops`. Full detail in
+`docs/refactoring-report.md` → `## Extended Agents`.
+
+### Changes Made
+
+| File | Change |
+| --- | --- |
+| `references/review-protocol.md` | Now normative for all 5 skills; added `ARCH-*`/`RT-*`/`GRN-*` ID families (§11); added the shared Agent Interoperability Matrix (§13), replacing three near-identical copies previously embedded per skill. |
+| `schemas/finding.schema.json`, `schemas/handoff.schema.json`, `schemas/review.schema.json` | `id` pattern extended to `ARCH\|RT\|GRN`; `category` enum extended (`dependency`, `license`, `sbom`, `concurrency`, `memory`, `runtime`, `sustainability`, `cost`); `handoff.target` enum extended with `anubis-arch`, `anubis-runtime`, `anubis-greenops`. |
+| `Anubis.Arch.md`, `Anubis.Runtime.md`, `Anubis.GreenOps.md` | Rewritten as operating contracts (~200–211 lines each; previously 543–597), each with `Mission/Scope/Non-Scope/Operating Contract/Review Workflow/Evidence Contract/Finding Contract/Severity/Confidence/Remediation/Verification/Handoff/Output Contract/References`. `BLOCKER` removed from severity tables (now a review status); `Confidence` introduced; hardcoded LLM model tables (`Claude Sonnet 4.6`, `GPT-5.x`, `Gemini 3 Pro`, …) removed in favour of capability labels. |
+| `references/architecture-governance.md`, `references/netarchtest-rules.md`, `references/sbom.md` | New — `ARCH-LAYER`/`ARCH-DEP`/`ARCH-LIC`/`ARCH-DEBT` pattern catalogue, NetArchTest checklist + worked example, SBOM checklist + worked example. |
+| `references/runtime-performance.md` | New — `RT-N1`/`RT-ASYNC`/`RT-LOCK`/`RT-MEM`/`RT-CRAP` pattern catalogue; explicit overlap rule against `ANB-PERF-*`/`ANB-EFCORE-*` (an `RT-*` id requires runtime evidence, not just the static shape); CRAP formula reused from `references/testing.md`, not duplicated. |
+| `references/sustainability.md` | New — `GRN-CARBON`/`GRN-COST`/`GRN-PROV`/`GRN-REGION`/`GRN-PATTERN` pattern catalogue, GHG Protocol formula, regional emission factors, worked carbon-impact examples. |
+| `examples/arch-review.md`, `examples/runtime-review.md`, `examples/greenops-review.md` | New — worked Full Reviews, each including a rejected false positive. |
+| `tests/arch/*`, `tests/runtime/*`, `tests/greenops/*` | New — 11 behavioural test files (3–4 per agent, including a `false-positive.md` per agent). |
+| `install.sh` | v1.3: agent registry generalised from two hardcoded agents to a declarative array (`AGENT_IDS` + parallel `AGENT_FILE`/`AGENT_SHORT_NAME`/`AGENT_DESCRIPTION`/`AGENT_OPENCODE_NAME`/`AGENT_SETTINGS_DESCRIPTION`), bash-3.2-compatible (indexed arrays only, no associative arrays / namerefs); `get_agent_body`, `install_one_agent`, `install_dir`, `uninstall_agent` all loop over the registry instead of two copy-pasted branches; `.claude/settings.json` generated dynamically for whichever agents were installed; `--suite` accepts `arch`/`runtime`/`greenops`; `REQUIRED_RUNTIME_FILES` extended with the 5 new reference files. |
+| `tests/validate.sh` | `SKILL_FILES` extended to all 5 skill files. |
+| `tests/regression.sh` | Gates 2–4 now loop over all 5 skills; Gate 8 extended to the 3 new skills; new Gate 13 (`ARCH-*`/`RT-*`/`GRN-*` id-count thresholds) and Gate 14 (no hardcoded LLM model name, all 5 skills). |
+| `tests/install_test.sh` | `REQUIRED_FILES` and the broken-source fixture extended to all 5 skills + 5 new references. |
+| `README.md` | Skill table, architecture tree, References table, Tests/Handoff/Quick Start sections extended to 5 skills; `## Planned Agents` replaced with `## Agent Suite` (all ✅ implemented); `Anubis-azure` explicitly named as the one sibling agent still absent from this repository. |
+| `docs/installation.md` | Manual-install `cp` examples extended to all 5 skill files; `--suite` documented alongside `--agent`. |
+| `docs/arch/`, `docs/runtime/`, `docs/greenops/` | New — `usage.md` (concise, mirrors `docs/usage.md`'s invocation style), `installation.md` (pointer to the unified installer, no duplication), `examples.md` (pointer to the worked `examples/*.md`). |
+| `docs/refactoring-baseline.md` | `## Extended Agents` section appended (pre-work baseline: file/test state, known gaps). |
+
+### Rule Preservation
+
+`Anubis-Arch`, `Anubis-Runtime` and `Anubis-GreenOps` had **no formal
+finding IDs before this pass** — confirmed in the baseline (STEP 0).
+`ARCH-*`/`RT-*`/`GRN-*` are therefore a first assignment, not a rename;
+no OLD ID → NEW ID mapping applies to these three families. Introduced
+and verified present (Gate 13):
+
+- `ARCH-LAYER` (2), `ARCH-DEP` (3), `ARCH-LIC` (2), `ARCH-DEBT` (1)
+- `RT-N1` (1), `RT-ASYNC` (5), `RT-LOCK` (3), `RT-MEM` (3), `RT-CRAP` (1)
+- `GRN-CARBON` (1), `GRN-COST` (2), `GRN-PROV` (3), `GRN-REGION` (1), `GRN-PATTERN` (2)
+
+All pre-existing `ANB-*` and `AZDO-*` families are unchanged (Gates 5, 6, 11).
+
+### Installer Tests (extended)
+
+```text
+$ bash install.sh --dest <tmp> --suite arch   # single-suite filter
+✓ Anubis-Arch installato per Generic (generic)
+✓ Installazione completata e verificata
+
+$ bash install.sh --local                     # all 5 agents, local
+✓ Pacchetto Anubis installato localmente
+✓ Creato .claude/settings.json con registrazione agenti
+  (5 valid JSON entries, one per installed agent)
+```
+
+### Regression Tests (extended)
+
+```text
+$ bash tests/regression.sh
+REGRESSION OK
+  passed: 228   failed: 0
+```
 
 ## Final Status
 

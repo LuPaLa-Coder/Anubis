@@ -1,26 +1,31 @@
-# Anubis .NET Agent
+# Anubis Agent Suite
 
-**Senior code reviewer specializzato in .NET architecture** — review tecnica
-strutturata per progetti .NET con severity condivisa, finding evidence-based,
-refactoring concreti e handoff opzionali verso agenti specializzati
-(Azure DevOps, delivery).
+**Suite di code reviewer specializzati per .NET e Azure** — review tecnica
+strutturata con severity condivisa, finding evidence-based, refactoring
+concreti e handoff tra specialisti (codice, pipeline, architettura,
+runtime, sostenibilità).
 
 ## Cosa Fa
 
-Anubis è un agent esperto di revisione codice .NET che:
+Anubis è una suite di agent esperti che:
 
 - **Analizza codice C# e .NET 8+** per identificare vulnerabilità, code smell e anti-pattern
 - **Valuta architettura cloud** (AWS, Azure, GCP) e layering architetturale
-- **Fornisce refactoring concreti** con proposte di miglioramento implementabili
+- **Governa dipendenze, licenze e SBOM** per l'intera solution
+- **Analizza performance runtime** da tracce OpenTelemetry (N+1, lock contention, memory/GC)
+- **Stima carbon footprint e cost waste** su infrastruttura Azure (IaC)
 - **Correla rischi di codice con delivery** (CI/CD, pipeline YAML)
 - **Crea report tecnici completi** con severity condivisa e priorità chiare
 
-La suite include due skill:
+La suite include cinque skill:
 
 | Skill | Focus |
 | --- | --- |
 | `Anubis` | codice .NET applicativo, architettura, security, performance, testing, build |
 | `Anubis-devops` | security di pipeline YAML Azure DevOps |
+| `Anubis-Arch` | governance architetturale, dependency graph, license compliance, SBOM |
+| `Anubis-Runtime` | performance runtime da tracce OpenTelemetry, N+1, lock contention, memory/GC |
+| `Anubis-GreenOps` | carbon footprint, cost waste, over-provisioning, green pattern su IaC Azure |
 
 ## Target Users
 
@@ -35,13 +40,17 @@ Le skill sono **operating contract** compatti; la conoscenza tecnica vive in
 `references/`, i contratti machine-readable in `schemas/`.
 
 ```text
-Anubis.agent.md / Anubis.devops.md      # comportamento + workflow
+Anubis.agent.md · Anubis.devops.md              # comportamento + workflow
+Anubis.Arch.md · Anubis.Runtime.md · Anubis.GreenOps.md
         │
         ├── references/                 # knowledge base + regole
-        │     ├── review-protocol.md    # contratto condiviso (normativo)
+        │     ├── review-protocol.md    # contratto condiviso (normativo, §13 = interop matrix)
         │     ├── dotnet.md · security.md · architecture.md
         │     ├── performance.md · efcore.md · testing.md · msbuild.md
-        │     └── azure-devops-rules.md # 41 regole AZDO-SEC
+        │     ├── azure-devops-rules.md # 41 regole AZDO-SEC
+        │     ├── architecture-governance.md · netarchtest-rules.md · sbom.md
+        │     ├── runtime-performance.md
+        │     └── sustainability.md
         │
         ├── schemas/                    # finding / review / handoff
         ├── examples/                   # review svolte (incl. false positive)
@@ -68,6 +77,29 @@ Anubis.agent.md / Anubis.devops.md      # comportamento + workflow
   false positives documentati.
 - Security Score come **metrica secondaria** (formula deterministica).
 
+### Anubis-Arch (governance architetturale)
+
+- Pattern detection (Clean/DDD/Onion/CQRS/Layered), layer isolation,
+  dependency graph, version drift, license compliance (SPDX), SBOM
+  (CycloneDX/SPDX).
+- Genera regole NetArchTest pronte da committare.
+- Regole `ARCH-LAYER` / `ARCH-DEP` / `ARCH-LIC` / `ARCH-DEBT`.
+
+### Anubis-Runtime (performance runtime)
+
+- Analisi tracce OpenTelemetry: N+1 confermato da query count, thread
+  pool/async, lock contention, memory/GC, correlazione CRAP-latenza.
+- **Evidence First rinforzato**: un pattern statico senza traccia runtime
+  non diventa un finding `RT-*` — resta di competenza di `Anubis`.
+- Regole `RT-N1` / `RT-ASYNC` / `RT-LOCK` / `RT-MEM` / `RT-CRAP`.
+
+### Anubis-GreenOps (sostenibilità cloud)
+
+- Carbon footprint (GHG Protocol Scope 2/3), cost waste, over-provisioning,
+  green pattern (auto-shutdown, auto-scaling, RI/Spot, tiering), regional
+  energy mix.
+- Regole `GRN-CARBON` / `GRN-COST` / `GRN-PROV` / `GRN-REGION` / `GRN-PATTERN`.
+
 ## References
 
 | File | Contenuto |
@@ -81,6 +113,11 @@ Anubis.agent.md / Anubis.devops.md      # comportamento + workflow
 | `references/testing.md` | MSTest 3.x/4.x, CRAP score (`ANB-TEST`) |
 | `references/msbuild.md` | MSBuild / csproj anti-pattern `AP-01`…`AP-09` (`ANB-BUILD`) |
 | `references/azure-devops-rules.md` | 41 regole Azure DevOps (`AZDO-SEC0NN`) |
+| `references/architecture-governance.md` | Layer isolation, dependency drift, license compliance, complexity (`ARCH-LAYER`/`ARCH-DEP`/`ARCH-LIC`/`ARCH-DEBT`) |
+| `references/netarchtest-rules.md` | Checklist e worked example per la generazione di regole NetArchTest |
+| `references/sbom.md` | Checklist e worked example SBOM (CycloneDX) |
+| `references/runtime-performance.md` | N+1, async, lock, memory/GC confermati da trace (`RT-N1`/`RT-ASYNC`/`RT-LOCK`/`RT-MEM`/`RT-CRAP`) |
+| `references/sustainability.md` | Formula GHG Protocol, emission factor, green pattern (`GRN-CARBON`/`GRN-COST`/`GRN-PROV`/`GRN-REGION`/`GRN-PATTERN`) |
 
 ## Schemas
 
@@ -90,10 +127,12 @@ e review status sono enum vincolati; `BLOCKED` è separato dalla severity.
 
 ## Tests
 
-`tests/anubis/` e `tests/devops/` — test comportamentali (input atteso, finding
-attesi, severity, confidence, handoff, non-finding). `tests/regression.sh` verifica
-che il refactoring non abbia perso regole, severity, modalità, handoff, struttura
-di output, schema o riferimenti interni:
+`tests/anubis/`, `tests/devops/`, `tests/arch/`, `tests/runtime/` e
+`tests/greenops/` — test comportamentali (input atteso, finding attesi,
+severity, confidence, handoff, non-finding). `tests/regression.sh`
+verifica che il refactoring non abbia perso regole, severity, modalità,
+handoff, struttura di output, schema o riferimenti interni, per tutte e
+cinque le skill:
 
 ```bash
 bash tests/regression.sh
@@ -101,10 +140,12 @@ bash tests/regression.sh
 
 ## Handoff
 
-`Anubis` ⇄ `Anubis-devops` è bidirezionale e avviene **solo quando serve un
-altro specialista**. Handoff verso `human` per permessi/approvazioni/contesto
-mancante. Il contratto è in `references/review-protocol.md` e
-`schemas/handoff.schema.json`.
+Ogni coppia di skill scambia handoff **solo quando serve un altro
+specialista**: `Anubis` ⇄ `Anubis-devops` ⇄ `Anubis-Arch` ⇄
+`Anubis-Runtime` ⇄ `Anubis-GreenOps`. Handoff verso `human` per
+permessi/approvazioni/contesto mancante. Il contratto e la matrice di
+interoperabilità completa sono in `references/review-protocol.md`
+(§10, §13) e `schemas/handoff.schema.json`.
 
 ## Output Format
 
@@ -117,10 +158,14 @@ agente`).
 ## Quick Start
 
 1. **Install** — vedi [`docs/installation.md`](docs/installation.md)
-2. **Use** — vedi [`docs/usage.md`](docs/usage.md) e
-   [`docs/devops/usage.md`](docs/devops/usage.md)
-3. **Examples** — [`docs/examples.md`](docs/examples.md),
-   [`docs/devops/examples.md`](docs/devops/examples.md) e `examples/`
+   (`--suite anubis|devops|arch|runtime|greenops` per una singola skill)
+2. **Use** — vedi [`docs/usage.md`](docs/usage.md),
+   [`docs/devops/usage.md`](docs/devops/usage.md),
+   [`docs/arch/usage.md`](docs/arch/usage.md),
+   [`docs/runtime/usage.md`](docs/runtime/usage.md),
+   [`docs/greenops/usage.md`](docs/greenops/usage.md)
+3. **Examples** — [`docs/examples.md`](docs/examples.md) e le rispettive
+   `docs/<skill>/examples.md`, oppure direttamente `examples/`
 4. **Reference and refactoring** — [`docs/refactoring-report.md`](docs/refactoring-report.md)
 
 ## Input Requirements
@@ -133,9 +178,11 @@ agente`).
 ## Support & Contacts
 
 - **Issues & Feedback**: [GitHub Issues](https://github.com/LuPaLa-Coder/anubis/issues)
-- **Related Agents**: **Anubis-devops** (pipeline security) è parte di questo
-  repository; **Anubis-Runtime**, **Anubis-Arch** e **Anubis-GreenOps** sono
-  pianificati (vedi [Planned Agents](#planned-agents)).
+- **Related Agents**: **Anubis-devops** (pipeline security), **Anubis-Arch**
+  (governance architetturale), **Anubis-Runtime** (performance runtime) e
+  **Anubis-GreenOps** (sostenibilità cloud) sono tutte parte di questo
+  repository (vedi [Agent Suite](#agent-suite)). `Anubis-azure` (audit
+  security su subscription Azure) non esiste in questo repository.
 
 ---
 
@@ -145,23 +192,23 @@ agente`).
 - Security review di sorgente
 
 **Quando usare un altro agent:**
-- Focus su **pipeline Azure DevOps YAML** → usa **Anubis-devops** (incluso in
-  questo repository)
-- Focus su **performance runtime e optimization** → *Anubis-Runtime* (pianificato)
-- Focus su **governance architetturale e compliance** → *Anubis-Arch* (pianificato)
-- Focus su **cost/carbon footprint** → *Anubis-GreenOps* (pianificato)
+- Focus su **pipeline Azure DevOps YAML** → usa **Anubis-devops**
+- Focus su **governance architetturale, dipendenze, licenze, SBOM** → usa **Anubis-Arch**
+- Focus su **performance runtime e OpenTelemetry** → usa **Anubis-Runtime**
+- Focus su **carbon footprint e cost optimization** → usa **Anubis-GreenOps**
 
-## Planned Agents
+## Agent Suite
 
-I seguenti agenti **non sono ancora implementati** in questo repository: sono
-parte della roadmap e non vanno considerati componenti disponibili.
-
-| Agent | Stato | Focus previsto |
-| --- | --- | --- |
-| Anubis-devops | ✅ implementato in questo repository | security di pipeline YAML Azure DevOps |
-| Anubis-Runtime | 🗺️ pianificato | performance runtime, profiling, ottimizzazione |
-| Anubis-Arch | 🗺️ pianificato | governance architetturale e compliance |
-| Anubis-GreenOps | 🗺️ pianificato | cost/carbon footprint |
-
-Solo `Anubis` e `Anubis-devops` sono oggi installabili e documentati in questo
+Tutti e cinque gli agenti sono **implementati e installabili** da questo
 repository.
+
+| Agent | Stato | Focus |
+| --- | --- | --- |
+| Anubis | ✅ implementato | codice .NET, architettura applicativa, security, performance, testing, build |
+| Anubis-devops | ✅ implementato | security di pipeline YAML Azure DevOps |
+| Anubis-Arch | ✅ implementato | governance architetturale, dependency graph, license compliance, SBOM |
+| Anubis-Runtime | ✅ implementato | performance runtime da tracce OpenTelemetry, N+1, lock contention, memory/GC |
+| Anubis-GreenOps | ✅ implementato | carbon footprint, cost waste, over-provisioning, green pattern |
+
+`Anubis-azure` (audit security su Azure subscription) resta fuori dal
+perimetro di questo repository: non esiste ancora come skill installabile.

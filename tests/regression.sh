@@ -30,40 +30,50 @@ file_exists() {
 
 head "Gate 1 — Repository / files"
 for f in \
-  Anubis.agent.md Anubis.devops.md README.md \
+  Anubis.agent.md Anubis.devops.md Anubis.Arch.md Anubis.Runtime.md Anubis.GreenOps.md README.md \
   references/review-protocol.md references/dotnet.md references/security.md \
   references/architecture.md references/performance.md references/efcore.md \
   references/testing.md references/msbuild.md references/azure-devops-rules.md \
+  references/architecture-governance.md references/netarchtest-rules.md references/sbom.md \
+  references/runtime-performance.md references/sustainability.md \
   schemas/finding.schema.json schemas/review.schema.json schemas/handoff.schema.json \
   examples/dotnet-review.md examples/security-review.md \
   examples/performance-review.md examples/devops-review.md \
+  examples/arch-review.md examples/runtime-review.md examples/greenops-review.md \
   tests/regression.md \
   tests/anubis/security.md tests/anubis/architecture.md \
   tests/anubis/performance.md tests/anubis/testing.md tests/anubis/false-positive.md \
   tests/devops/secrets.md tests/devops/identity.md \
   tests/devops/supply-chain.md tests/devops/pipeline.md tests/devops/false-positive.md \
+  tests/arch/layering.md tests/arch/dependency-drift.md tests/arch/license.md tests/arch/false-positive.md \
+  tests/runtime/n-plus-one.md tests/runtime/async-lock.md tests/runtime/memory.md tests/runtime/false-positive.md \
+  tests/greenops/over-provisioning.md tests/greenops/carbon.md tests/greenops/false-positive.md \
   docs/refactoring-baseline.md docs/refactoring-report.md; do
   file_exists "$f" "exists: $f"
 done
 
 head "Gate 2 — Skill operating contracts"
-has Anubis.agent.md '^## Mission' "Anubis has Mission"
-has Anubis.agent.md '^## Scope' "Anubis has Scope"
-has Anubis.agent.md '^## Non-Scope' "Anubis has Non-Scope"
-has Anubis.agent.md '^## Review Workflow' "Anubis has Review Workflow"
+for skill in Anubis.agent.md Anubis.devops.md Anubis.Arch.md Anubis.Runtime.md Anubis.GreenOps.md; do
+  has "$skill" '^## Mission' "$skill has Mission"
+  has "$skill" '^## Scope' "$skill has Scope"
+  has "$skill" '^## Non-Scope' "$skill has Non-Scope"
+  has "$skill" '^## Review Workflow' "$skill has Review Workflow"
+done
 has Anubis.agent.md 'Quick Pass' "Anubis preserves Quick Pass"
 has Anubis.agent.md 'Full Review' "Anubis preserves Full Review"
 has Anubis.agent.md 'BLOCKED' "Anubis preserves BLOCKED review status"
-has Anubis.devops.md '^## Mission' "DevOps has Mission"
-has Anubis.devops.md '^## Scope' "DevOps has Scope"
-has Anubis.devops.md '^## Non-Scope' "DevOps has Non-Scope"
 has Anubis.devops.md '^## Detection' "DevOps has Detection"
 has Anubis.devops.md 'STRUCTURAL PARSING FIRST|Structural YAML parsing first' "DevOps prefers structural parsing"
+for skill in Anubis.Arch.md Anubis.Runtime.md Anubis.GreenOps.md; do
+  has "$skill" 'BLOCKED' "$skill preserves BLOCKED review status"
+  has "$skill" 'Confidence' "$skill has Confidence"
+done
 
-head "Gate 3 — Output contract preserved (both skills)"
+head "Gate 3 — Output contract preserved (all 5 skills)"
 for section in 'Decisioni chiave' 'Assunzioni' 'Rischi' 'Blocchi' 'Artefatti prodotti' 'Handoff al prossimo agente'; do
-  has Anubis.agent.md "$section" "Anubis output: $section"
-  has Anubis.devops.md "$section" "DevOps output: $section"
+  for skill in Anubis.agent.md Anubis.devops.md Anubis.Arch.md Anubis.Runtime.md Anubis.GreenOps.md; do
+    has "$skill" "$section" "$skill output: $section"
+  done
 done
 
 head "Gate 4 — Handoff preserved"
@@ -72,6 +82,12 @@ has Anubis.agent.md 'human' "Anubis → human handoff"
 has Anubis.agent.md 'nessuno|`none`' "Anubis → none handoff"
 has Anubis.devops.md '`anubis`|→ `Anubis`' "DevOps → Anubis handoff"
 has Anubis.devops.md 'human' "DevOps → human handoff"
+has Anubis.Arch.md 'anubis-arch|anubis-runtime|anubis-greenops' "Anubis-Arch has cross-suite handoff targets"
+has Anubis.Arch.md 'human' "Anubis-Arch → human handoff"
+has Anubis.Runtime.md 'anubis-arch|anubis-greenops' "Anubis-Runtime has cross-suite handoff targets"
+has Anubis.Runtime.md 'human' "Anubis-Runtime → human handoff"
+has Anubis.GreenOps.md 'anubis-arch|anubis-runtime|anubis-devops' "Anubis-GreenOps has cross-suite handoff targets"
+has Anubis.GreenOps.md 'human' "Anubis-GreenOps → human handoff"
 
 head "Gate 5 — Azure DevOps rules preserved (41 ids)"
 AZDO_IDS="001 002 003 004 005 006 007 008 010 011 012 013 014 015 016 017 018 019 020 021 022 023 024 025 026 027 028 029 030 031 032 033 034 035 036 037 038 039 040 041 042"
@@ -104,6 +120,9 @@ has Anubis.devops.md 'secondary metric' "score explicitly secondary"
 head "Gate 8 — BLOCKER is not a severity"
 if grep -qE '\| *`BLOCKER`' Anubis.agent.md; then bad "Anubis severity table still contains BLOCKER"; else ok "Anubis severity table has no BLOCKER row"; fi
 has Anubis.devops.md 'not a severity' "DevOps states BLOCKED is not a severity"
+for skill in Anubis.Arch.md Anubis.Runtime.md Anubis.GreenOps.md; do
+  if grep -qE '\| *`BLOCKER`' "$skill"; then bad "$skill severity table still contains BLOCKER"; else ok "$skill severity table has no BLOCKER row"; fi
+done
 
 head "Gate 9 — JSON schemas valid"
 if command -v python3 >/dev/null 2>&1; then
@@ -141,6 +160,27 @@ if bash tests/validate.sh >/dev/null 2>&1; then
 else
   bad "tests/validate.sh (reference + schema) failed"
 fi
+
+head "Gate 13 — Extended agent rule families preserved (ARCH-* / RT-* / GRN-*)"
+EXT_MIN=("ARCH-LAYER:2" "ARCH-DEP:2" "ARCH-LIC:2" "ARCH-DEBT:1" \
+         "RT-N1:1" "RT-ASYNC:5" "RT-LOCK:3" "RT-MEM:3" "RT-CRAP:1" \
+         "GRN-CARBON:1" "GRN-COST:2" "GRN-PROV:3" "GRN-REGION:1" "GRN-PATTERN:2")
+for entry in "${EXT_MIN[@]}"; do
+  family="${entry%%:*}"
+  expected="${entry##*:}"
+  n=$(grep -rhoE "${family}-[0-9]{3}" references/ 2>/dev/null | sort -u | wc -l | tr -d ' ')
+  if [[ "$n" -ge "$expected" ]]; then ok "$family ids present ($n >= $expected)"; else bad "$family ids missing (found $n, expected >= $expected)"; fi
+done
+
+head "Gate 14 — Model independence (no hardcoded LLM names)"
+MODEL_PATTERN='Claude Sonnet|Claude Opus|Claude Haiku|GPT-5|GPT-4|Gemini [0-9]'
+for skill in Anubis.agent.md Anubis.devops.md Anubis.Arch.md Anubis.Runtime.md Anubis.GreenOps.md; do
+  if grep -qE "$MODEL_PATTERN" "$skill"; then
+    bad "$skill references a specific LLM model (model independence violated)"
+  else
+    ok "$skill has no hardcoded LLM model name"
+  fi
+done
 
 head "Result"
 printf '  passed: %d   failed: %d\n' "$PASS" "$FAIL"

@@ -205,3 +205,132 @@ non-findings) intended for LLM-driven or manual execution.
 | Missing runtime file fails installation | ✅ post-install verification |
 | Broken references detected automatically | ✅ `tests/validate.sh` |
 | README distinguishes current vs planned agents | ✅ `## Planned Agents` |
+
+---
+
+## Extended Agents (Arch / Runtime / GreenOps)
+
+Follow-up pass applying the same architecture to `Anubis.Arch.md`,
+`Anubis.Runtime.md` and `Anubis.GreenOps.md`, previously monolithic and
+absent from `install.sh`/`tests/`/README as implemented components.
+
+Plan reference: *Anubis — Extended Agents Refactoring Plan (Arch ·
+Runtime · GreenOps)*. Baseline: `docs/refactoring-baseline.md` →
+`## Extended Agents`. Full change list and installer/regression output:
+`docs/final-audit-report.md` → `## Extended Agents`.
+
+### Files Changed
+
+| File | Before | After | Change |
+| --- | --- | --- | --- |
+| `Anubis.Arch.md` | 597 lines, monolithic manifesto + pattern catalogue + model table | 211 lines, operating contract | NetArchTest/SBOM catalogues moved to `references/`; Scope/Non-Scope/Review Workflow added; `BLOCKER` removed from severity; `Confidence` introduced; model names replaced by capability labels |
+| `Anubis.Runtime.md` | 543 lines, same pattern | 209 lines, operating contract | anti-pattern catalogue moved to `references/runtime-performance.md`; CRAP formula de-duplicated (reused from `references/testing.md`); same Scope/BLOCKER/Confidence/model fixes |
+| `Anubis.GreenOps.md` | 567 lines, same pattern | 199 lines, operating contract | carbon/cost/green-pattern catalogue moved to `references/sustainability.md`; same Scope/BLOCKER/Confidence/model fixes |
+| `references/review-protocol.md` | normative for `Anubis`/`Anubis-devops` only | normative for all 5 skills | opening line updated; §11 ID table extended (`ARCH-*`/`RT-*`/`GRN-*`); new §13 Agent Interoperability Matrix (single source, replacing 3 near-identical copies previously embedded per skill) |
+| `schemas/finding.schema.json`, `schemas/handoff.schema.json`, `schemas/review.schema.json` | `id` pattern `(ANB\|AZDO)-…`; `category` enum without dependency/runtime/sustainability values; `handoff.target` without the 3 new agents | extended in lockstep across all three files | `id` pattern → `(ANB\|AZDO\|ARCH\|RT\|GRN)-…`; `category` +8 values; `handoff.target` +3 values |
+| `install.sh` | v1.2, two agents hardcoded (`ANUBIS_FILE`/`DEVOPS_FILE`, two cache vars, two-branch `case` in every function) | v1.3, declarative registry (`AGENT_IDS` + 5 parallel arrays), bash-3.2-compatible | `get_agent_body`, `install_one_agent`, `install_dir`, `uninstall_agent`, `install_local`'s `settings.json` generation all loop over the registry; `--suite` accepts `arch`/`runtime`/`greenops`; `REQUIRED_RUNTIME_FILES` +5 |
+| `tests/validate.sh` | `SKILL_FILES` = 2 files | 5 files | reference validation now covers the 3 new skills automatically |
+| `tests/regression.sh` | 141 checks, 12 gates | 228 checks, 14 gates | Gates 2–4 loop over 5 skills; Gate 8 extended; new Gate 13 (`ARCH-*`/`RT-*`/`GRN-*` id thresholds) and Gate 14 (no hardcoded LLM model name) |
+| `tests/install_test.sh` | `REQUIRED_FILES` = 14 entries, broken-source fixture = 2 skill files | `REQUIRED_FILES` = 21 entries, fixture = 5 skill files | installer regression now exercises all 5 skills + 5 new references |
+| `README.md` | 2-skill table; `## Planned Agents` (3 agents marked 🗺️ pianificato) | 5-skill table; `## Agent Suite` (all ✅ implementato) | architecture tree, References table, Tests/Handoff/Quick Start sections extended |
+| `docs/installation.md` | manual-install examples copied only `Anubis.agent.md`/`Anubis.devops.md` | copies all 5 skill files; `--suite` documented | stale example fixed |
+
+### Files Added
+
+- `references/architecture-governance.md`, `references/netarchtest-rules.md`,
+  `references/sbom.md` — Anubis-Arch knowledge base (`ARCH-LAYER`,
+  `ARCH-DEP`, `ARCH-LIC`, `ARCH-DEBT`).
+- `references/runtime-performance.md` — Anubis-Runtime knowledge base
+  (`RT-N1`, `RT-ASYNC`, `RT-LOCK`, `RT-MEM`, `RT-CRAP`), with an explicit
+  rule to reuse `ANB-PERF-*`/`ANB-EFCORE-*` instead of duplicating a
+  static-only pattern.
+- `references/sustainability.md` — Anubis-GreenOps knowledge base
+  (`GRN-CARBON`, `GRN-COST`, `GRN-PROV`, `GRN-REGION`, `GRN-PATTERN`),
+  GHG Protocol formula, regional emission factors, worked examples.
+- `examples/arch-review.md`, `examples/runtime-review.md`,
+  `examples/greenops-review.md` — worked reviews, each with a rejected
+  false positive.
+- `tests/arch/{layering,dependency-drift,license,false-positive}.md`.
+- `tests/runtime/{n-plus-one,async-lock,memory,false-positive}.md`.
+- `tests/greenops/{over-provisioning,carbon,false-positive}.md`.
+- `docs/arch/`, `docs/runtime/`, `docs/greenops/` —
+  `usage.md`/`installation.md`/`examples.md` per agent (installation.md
+  points to the unified installer instead of duplicating it).
+
+### Files Removed
+
+None. No file was deleted; content was relocated (skill → reference) or
+extended in place (protocol, schemas, tests, README, install.sh).
+
+### Rules Migrated
+
+`Anubis.Arch.md`/`Anubis.Runtime.md`/`Anubis.GreenOps.md` had **no
+formal finding IDs before this pass** (confirmed in the STEP 0
+baseline). `ARCH-*`, `RT-*` and `GRN-*` are therefore a **first
+assignment**, not a migration — no OLD ID → NEW ID mapping applies to
+these three families, unlike the `AZDO-SEC0NN` legacy-ID preservation
+done for `Anubis-devops`.
+
+### Rules Preserved
+
+All pre-existing `ANB-*` and `AZDO-*` families are unchanged by this
+pass (Gates 5, 6, 11 of `tests/regression.sh` still pass at their
+original counts).
+
+### Contract Changes
+
+- `references/review-protocol.md` §13 (Agent Interoperability Matrix)
+  is new; every skill's `## Handoff` section links to it instead of
+  redefining the same table (previously duplicated 3× near-identically
+  across `Anubis.Arch.md`/`Anubis.Runtime.md`/`Anubis.GreenOps.md`).
+- `schemas/*.schema.json` — `id` pattern, `category` enum and
+  `handoff.target` enum extended in `finding.schema.json`,
+  `handoff.schema.json` and `review.schema.json` in lockstep (the third
+  file carries its own duplicate copies of these enums; all three were
+  updated together to avoid drift).
+
+### Skill Changes
+
+Both `Anubis.Arch.md`/`Anubis.Runtime.md`/`Anubis.GreenOps.md` now
+follow the same section order as `Anubis.agent.md`/`Anubis.devops.md`:
+`Mission / Scope / Non-Scope / Operating Contract / Review Workflow /
+Evidence Contract / Finding Contract / Severity / Confidence /
+Remediation / Verification / Handoff / Output Contract / References`,
+each with a Quick Pass / Full Review split and a `BLOCKED` short-circuit
+mirroring `Anubis.agent.md`.
+
+### Test Results
+
+```text
+$ bash tests/validate.sh
+VALIDATION OK
+
+$ bash tests/regression.sh
+REGRESSION OK
+  passed: 228   failed: 0
+
+$ bash tests/install_test.sh
+INSTALLATION TEST: PASS
+IDEMPOTENCY TEST: PASS
+REFERENCE TEST: PASS
+SCHEMA TEST: PASS
+```
+
+### Known Limitations
+
+- No automated LLM harness: `tests/arch/*`, `tests/runtime/*` and
+  `tests/greenops/*` are specifications, not machine-executed assertions
+  (same limitation already recorded for `tests/anubis/*`/`tests/devops/*`).
+- `Anubis-azure` remains referenced only as a handoff/interoperability
+  target; it is not implemented in this repository.
+
+### Follow-up Recommendations
+
+1. Consider an automated LLM harness that actually runs each
+   `tests/{anubis,devops,arch,runtime,greenops}/*.md` scenario against a
+   live agent invocation and diffs the reported findings.
+2. If `Anubis-azure` is ever implemented in this repository, extend the
+   installer registry (`AGENT_IDS` + parallel arrays in `install.sh`)
+   and `references/review-protocol.md` §11/§13 the same way this pass
+   extended them for Arch/Runtime/GreenOps — the mechanism is now
+   generic, not agent-count-specific.

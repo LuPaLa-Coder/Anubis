@@ -113,7 +113,7 @@
         "verification"
       ],
       "properties": {
-        "id": { "type": "string", "pattern": "^(ANB|AZDO)-[A-Z]+-?[0-9]{3,4}$" },
+        "id": { "type": "string", "pattern": "^(ANB|AZDO|ARCH|RT|GRN)-[A-Z]+-?[0-9]{3,4}$" },
         "title": { "type": "string", "minLength": 1 },
         "category": {
           "type": "string",
@@ -128,7 +128,15 @@
             "secrets",
             "identity",
             "supply-chain",
-            "pipeline"
+            "pipeline",
+            "dependency",
+            "license",
+            "sbom",
+            "concurrency",
+            "memory",
+            "runtime",
+            "sustainability",
+            "cost"
           ]
         },
         "severity": { "type": "string", "enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW"] },
@@ -173,7 +181,7 @@
         },
         "finding_ids": {
           "type": "array",
-          "items": { "type": "string", "pattern": "^(ANB|AZDO)-[A-Z]+-?[0-9]{3,4}$" }
+          "items": { "type": "string", "pattern": "^(ANB|AZDO|ARCH|RT|GRN)-[A-Z]+-?[0-9]{3,4}$" }
         },
         "effort": { "type": "string", "enum": ["S", "M", "L"] },
         "priority": { "type": "string", "enum": ["P0", "P1", "P2"] },
@@ -185,7 +193,7 @@
       "additionalProperties": false,
       "required": ["target", "reason"],
       "properties": {
-        "target": { "type": "string", "enum": ["anubis", "anubis-devops", "human", "none"] },
+        "target": { "type": "string", "enum": ["anubis", "anubis-devops", "anubis-arch", "anubis-runtime", "anubis-greenops", "human", "none"] },
         "reason": { "type": "string", "minLength": 1 },
         "findings": { "type": "array", "items": { "type": "string" } },
         "files": { "type": "array", "items": { "type": "string" } },

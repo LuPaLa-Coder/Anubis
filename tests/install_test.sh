@@ -31,6 +31,9 @@ head() { printf '\n\033[1m%s\033[0m\n' "$1"; }
 REQUIRED_FILES=(
   Anubis.agent.md
   Anubis.devops.md
+  Anubis.Arch.md
+  Anubis.Runtime.md
+  Anubis.GreenOps.md
   references/review-protocol.md
   references/dotnet.md
   references/security.md
@@ -40,6 +43,11 @@ REQUIRED_FILES=(
   references/testing.md
   references/msbuild.md
   references/azure-devops-rules.md
+  references/architecture-governance.md
+  references/netarchtest-rules.md
+  references/sbom.md
+  references/runtime-performance.md
+  references/sustainability.md
   schemas/finding.schema.json
   schemas/review.schema.json
   schemas/handoff.schema.json
@@ -112,7 +120,7 @@ fi
 # ── 4. Missing runtime file must fail the installation ───────────────────────
 head "Broken source must fail installation"
 BROKEN_DEST="$(mktemp -d)"
-cp Anubis.agent.md Anubis.devops.md "$BROKEN_SRC/"
+cp Anubis.agent.md Anubis.devops.md Anubis.Arch.md Anubis.Runtime.md Anubis.GreenOps.md "$BROKEN_SRC/"
 cp -R references schemas examples "$BROKEN_SRC/"
 rm -f "$BROKEN_SRC/references/review-protocol.md"
 if ANUBIS_SOURCE_DIR="$BROKEN_SRC" bash install.sh --dest "$BROKEN_DEST" >/dev/null 2>&1; then
