@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/LuPaLa-Coder/anubis/schemas/finding.schema.json",
+  "title": "Anubis Finding",
+  "description": "A single validated review finding shared by Anubis and Anubis-devops.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "title",
+    "category",
+    "severity",
+    "confidence",
+    "file",
+    "location",
+    "evidence",
+    "impact",
+    "verification"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^(ANB|AZDO)-[A-Z]+-?[0-9]{3,4}$",
+      "description": "Stable rule/finding id, e.g. ANB-SEC-001. Legacy Azure DevOps ids without the final dash (AZDO-SEC001) remain valid."
+    },
+    "title": { "type": "string", "minLength": 1 },
+    "category": {
+      "type": "string",
+      "enum": [
+        "security",
+        "architecture",
+        "performance",
+        "dotnet",
+        "efcore",
+        "testing",
+        "build",
+        "secrets",
+        "identity",
+        "supply-chain",
+        "pipeline"
+      ]
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW"]
+    },
+    "confidence": {
+      "type": "string",
+      "enum": ["HIGH", "MEDIUM", "LOW"]
+    },
+    "file": { "type": "string", "minLength": 1 },
+    "location": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Line, range, symbol or resource path within the artifact."
+    },
+    "evidence": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Concrete excerpt proving the candidate. Required: no evidence, no finding."
+    },
+    "impact": { "type": "string", "minLength": 1 },
+    "root_cause": { "type": "string" },
+    "recommendation": { "type": "string" },
+    "fix": {
+      "type": "string",
+      "description": "Concrete, localised change. Omitted when the remediation is a migration."
+    },
+    "migration": {
+      "type": "string",
+      "description": "Multi-component / multi-phase change."
+    },
+    "verification": {
+      "type": "string",
+      "minLength": 1,
+      "description": "How to prove the fix. Every remediation must define this."
+    },
+    "references": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "cwe": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ]
+    },
+    "owasp": { "type": "string" },
+    "effort": { "type": "string", "enum": ["S", "M", "L"] },
+    "priority": { "type": "string", "enum": ["P0", "P1", "P2"] },
+    "false_positive_reason": {
+      "type": "string",
+      "description": "Set only on rejected candidates recorded in the review summary."
+    }
+  }
+}

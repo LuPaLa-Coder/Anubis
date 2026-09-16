@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/LuPaLa-Coder/anubis/schemas/handoff.schema.json",
+  "title": "Anubis Handoff",
+  "description": "Formal handoff between Anubis skills and humans. Only emitted when another specialist is actually required.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["handoff"],
+  "properties": {
+    "handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target", "reason"],
+      "properties": {
+        "target": {
+          "type": "string",
+          "enum": ["anubis", "anubis-devops", "human", "none"]
+        },
+        "reason": { "type": "string", "minLength": 1 },
+        "findings": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Finding ids or short descriptors being transferred."
+        },
+        "files": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Artifacts the next agent must read."
+        },
+        "required_context": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Context the next agent needs to continue."
+        },
+        "artifacts": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Produced artifacts to transfer."
+        }
+      }
+    }
+  }
+}

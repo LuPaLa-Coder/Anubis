@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/LuPaLa-Coder/anubis/schemas/review.schema.json",
+  "title": "Anubis Review",
+  "description": "Structured review produced by Anubis or Anubis-devops. Review status is an axis separate from finding severity.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["review"],
+  "properties": {
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "scope", "summary", "findings", "remediation", "verification"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["COMPLETE", "PARTIAL", "BLOCKED"],
+          "description": "Review status. Never a severity; BLOCKER is not a valid value here."
+        },
+        "scope": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["artifacts", "objective"],
+          "properties": {
+            "artifacts": { "type": "array", "items": { "type": "string" } },
+            "objective": { "type": "string", "minLength": 1 },
+            "boundaries": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "summary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["severity_counts"],
+          "properties": {
+            "severity_counts": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["CRITICAL", "HIGH", "MEDIUM", "LOW"],
+              "properties": {
+                "CRITICAL": { "type": "integer", "minimum": 0 },
+                "HIGH": { "type": "integer", "minimum": 0 },
+                "MEDIUM": { "type": "integer", "minimum": 0 },
+                "LOW": { "type": "integer", "minimum": 0 }
+              }
+            },
+            "false_positives_rejected": { "type": "integer", "minimum": 0 },
+            "takeaways": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "findings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/finding" }
+        },
+        "remediation": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/remediation" }
+        },
+        "verification": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "handoff": {
+          "oneOf": [
+            { "$ref": "#/$defs/handoff" },
+            { "type": "null" }
+          ]
+        },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "score": { "type": "number" },
+            "methodology": { "type": "string" }
+          },
+          "description": "Optional secondary metric. Never a substitute for findings."
+        },
+        "blocker": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["reason"],
+          "properties": {
+            "reason": { "type": "string", "minLength": 1 },
+            "required_context": { "type": "array", "items": { "type": "string" } }
+          },
+          "description": "Present only when status is BLOCKED."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "status": { "const": "BLOCKED" } },
+            "required": ["status"]
+          },
+          "then": { "required": ["blocker"] }
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "category",
+        "severity",
+        "confidence",
+        "file",
+        "location",
+        "evidence",
+        "impact",
+        "verification"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^(ANB|AZDO)-[A-Z]+-?[0-9]{3,4}$" },
+        "title": { "type": "string", "minLength": 1 },
+        "category": {
+          "type": "string",
+          "enum": [
+            "security",
+            "architecture",
+            "performance",
+            "dotnet",
+            "efcore",
+            "testing",
+            "build",
+            "secrets",
+            "identity",
+            "supply-chain",
+            "pipeline"
+          ]
+        },
+        "severity": { "type": "string", "enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW"] },
+        "confidence": { "type": "string", "enum": ["HIGH", "MEDIUM", "LOW"] },
+        "file": { "type": "string", "minLength": 1 },
+        "location": { "type": "string", "minLength": 1 },
+        "evidence": { "type": "string", "minLength": 1 },
+        "impact": { "type": "string", "minLength": 1 },
+        "root_cause": { "type": "string" },
+        "recommendation": { "type": "string" },
+        "fix": { "type": "string" },
+        "migration": { "type": "string" },
+        "verification": { "type": "string", "minLength": 1 },
+        "references": { "type": "array", "items": { "type": "string" } },
+        "cwe": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "array", "items": { "type": "string" } }
+          ]
+        },
+        "owasp": { "type": "string" },
+        "effort": { "type": "string", "enum": ["S", "M", "L"] },
+        "priority": { "type": "string", "enum": ["P0", "P1", "P2"] }
+      }
+    },
+    "remediation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["item", "classification", "verification"],
+      "properties": {
+        "item": { "type": "string", "minLength": 1 },
+        "classification": {
+          "type": "string",
+          "enum": [
+            "recommendation",
+            "fix",
+            "migration",
+            "yaml-fix",
+            "infrastructure-fix",
+            "code-or-config-fix"
+          ]
+        },
+        "finding_ids": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^(ANB|AZDO)-[A-Z]+-?[0-9]{3,4}$" }
+        },
+        "effort": { "type": "string", "enum": ["S", "M", "L"] },
+        "priority": { "type": "string", "enum": ["P0", "P1", "P2"] },
+        "verification": { "type": "string", "minLength": 1 }
+      }
+    },
+    "handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target", "reason"],
+      "properties": {
+        "target": { "type": "string", "enum": ["anubis", "anubis-devops", "human", "none"] },
+        "reason": { "type": "string", "minLength": 1 },
+        "findings": { "type": "array", "items": { "type": "string" } },
+        "files": { "type": "array", "items": { "type": "string" } },
+        "required_context": { "type": "array", "items": { "type": "string" } },
+        "artifacts": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}
