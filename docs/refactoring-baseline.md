@@ -153,3 +153,61 @@ docs/devops/examples.md
 ```
 
 Rules for this baseline step: do **not** fix unrelated issues here.
+
+---
+
+## Extended Agents (Arch / Runtime / GreenOps)
+
+### Repository state before extension
+
+- `Anubis.Arch.md` (597 righe), `Anubis.Runtime.md` (543 righe),
+  `Anubis.GreenOps.md` (567 righe): manifesti monolitici, non ancora
+  operating contract. Untracked in git alla data di questo lavoro.
+- `bash tests/validate.sh` → VALIDATION OK (22 referenze, 3 schema).
+- `bash tests/regression.sh` → REGRESSION OK (141 passed, 0 failed).
+- `bash tests/install_test.sh` → INSTALLATION/IDEMPOTENCY/REFERENCE/SCHEMA
+  TEST: PASS.
+
+### Existing content (per agent)
+
+- **Anubis-Arch**: NetArchTest rule generation, dependency graph
+  analysis, license compliance (SPDX), SBOM generation (CycloneDX/SPDX),
+  catalogo pattern architetturali (Clean/DDD/Onion/CQRS/Layered).
+- **Anubis-Runtime**: OpenTelemetry trace analysis, N+1 detection,
+  thread pool/async efficiency, lock contention, memory/GC, CRAP-latency
+  correlation, catalogo anti-pattern (Async/N+1/Lock/Memory/Thread Pool).
+- **Anubis-GreenOps**: carbon footprint (GHG Protocol Scope 2/3), cost
+  waste detection, over-provisioning, green pattern catalog, regional
+  energy mix quick reference.
+
+### Known gaps vs Anubis/Anubis-devops
+
+- Nessun campo `confidence` per finding.
+- `BLOCKER` trattato come riga della tabella severity (stesso difetto
+  già corretto in `Anubis.agent.md`).
+- Tabelle `## Modelli supportati` con nomi di modelli LLM hardcoded
+  (violazione della regola Model Independence già applicata altrove).
+- Matrice di interoperabilità estesa duplicata quasi identica nei tre
+  file.
+- Nessun ID di finding formale (`ANB-*`/`AZDO-*` o altro) — prima
+  assegnazione, non migrazione.
+- Nessuna presenza in `references/`, `schemas/` (enum/pattern),
+  `examples/`, `tests/`, `install.sh`, `tests/validate.sh`,
+  `tests/regression.sh`, `tests/install_test.sh`.
+- `README.md` li elenca come `🗺️ pianificato`, non implementati.
+
+### Files affected
+
+```text
+FILE                              PURPOSE                              REFERENCED BY                 REFERENCES
+Anubis.Arch.md                    skill Arch (monolitico)              install.sh (da fare)          nessuno
+Anubis.Runtime.md                 skill Runtime (monolitico)           install.sh (da fare)           nessuno
+Anubis.GreenOps.md                skill GreenOps (monolitico)          install.sh (da fare)           nessuno
+references/review-protocol.md     contratto condiviso                  Anubis, Anubis-devops          -
+schemas/*.schema.json             contratti machine-readable           Anubis, Anubis-devops          -
+install.sh                        installer (2 agenti hardcoded)       -                              Anubis.agent.md, Anubis.devops.md
+tests/validate.sh                 reference+schema validation          -                               Anubis.agent.md, Anubis.devops.md
+tests/regression.sh               regression gate                      -                               Anubis.agent.md, Anubis.devops.md, references/
+tests/install_test.sh             installer regression                 -                               install.sh
+README.md                         documentazione suite                 -                               tutti gli skill file
+```

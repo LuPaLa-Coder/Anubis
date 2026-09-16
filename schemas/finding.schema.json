@@ -20,8 +20,8 @@
   "properties": {
     "id": {
       "type": "string",
-      "pattern": "^(ANB|AZDO)-[A-Z]+-?[0-9]{3,4}$",
-      "description": "Stable rule/finding id, e.g. ANB-SEC-001. Legacy Azure DevOps ids without the final dash (AZDO-SEC001) remain valid."
+      "pattern": "^(ANB|AZDO|ARCH|RT|GRN)-[A-Z]+-?[0-9]{3,4}$",
+      "description": "Stable rule/finding id, e.g. ANB-SEC-001. Legacy Azure DevOps ids without the final dash (AZDO-SEC001) remain valid. ARCH-*/RT-*/GRN-* are the Anubis-Arch/Anubis-Runtime/Anubis-GreenOps families."
     },
     "title": { "type": "string", "minLength": 1 },
     "category": {
@@ -37,7 +37,15 @@
         "secrets",
         "identity",
         "supply-chain",
-        "pipeline"
+        "pipeline",
+        "dependency",
+        "license",
+        "sbom",
+        "concurrency",
+        "memory",
+        "runtime",
+        "sustainability",
+        "cost"
       ]
     },
     "severity": {

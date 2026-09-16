@@ -14,7 +14,7 @@
       "properties": {
         "target": {
           "type": "string",
-          "enum": ["anubis", "anubis-devops", "human", "none"]
+          "enum": ["anubis", "anubis-devops", "anubis-arch", "anubis-runtime", "anubis-greenops", "human", "none"]
         },
         "reason": { "type": "string", "minLength": 1 },
         "findings": {

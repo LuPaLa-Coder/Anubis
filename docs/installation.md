@@ -1,4 +1,7 @@
-# Anubis .NET Agent — Installation Guide
+# Anubis Agent Suite — Installation Guide
+
+Covers all five skills: `Anubis`, `Anubis-devops`, `Anubis-Arch`,
+`Anubis-Runtime`, `Anubis-GreenOps`. One installer, one runtime package.
 
 ## Prerequisites
 
@@ -19,10 +22,13 @@ This installs Anubis in all detected coding agents on your system.
 ### Selective install
 
 ```bash
-# Install only for a specific agent
+# Install only for a specific coding tool
 curl -fsSL https://raw.githubusercontent.com/LuPaLa-Coder/anubis/main/install.sh | bash -s -- --agent claude
 curl -fsSL https://raw.githubusercontent.com/LuPaLa-Coder/anubis/main/install.sh | bash -s -- --agent opencode
 curl -fsSL https://raw.githubusercontent.com/LuPaLa-Coder/anubis/main/install.sh | bash -s -- --agent copilot
+
+# Install only one skill of the suite (anubis | devops | arch | runtime | greenops)
+curl -fsSL https://raw.githubusercontent.com/LuPaLa-Coder/anubis/main/install.sh | bash -s -- --suite arch
 
 # Local install (project-level .claude directory)
 curl -fsSL https://raw.githubusercontent.com/LuPaLa-Coder/anubis/main/install.sh | bash -s -- --local
@@ -45,20 +51,25 @@ cd anubis
 #### Claude Code
 ```bash
 mkdir -p ~/.claude/agents
-cp Anubis.agent.md ~/.claude/agents/
+cp Anubis.agent.md Anubis.devops.md Anubis.Arch.md Anubis.Runtime.md Anubis.GreenOps.md ~/.claude/agents/
 ```
 
 #### OpenCode
 ```bash
 mkdir -p ~/.config/opencode/agents
-# OpenCode uses its own agent registration; place the file and configure via opencode.json
+# OpenCode uses its own agent registration; place the files (lowercase,
+# no dots) and configure via opencode.json
 cp Anubis.agent.md ~/.config/opencode/agents/anubis.md
+cp Anubis.devops.md ~/.config/opencode/agents/anubis-devops.md
+cp Anubis.Arch.md ~/.config/opencode/agents/anubis-arch.md
+cp Anubis.Runtime.md ~/.config/opencode/agents/anubis-runtime.md
+cp Anubis.GreenOps.md ~/.config/opencode/agents/anubis-greenops.md
 ```
 
 #### GitHub Copilot
 ```bash
 mkdir -p ~/.copilot/agents
-cp Anubis.agent.md ~/.copilot/agents/
+cp Anubis.agent.md Anubis.devops.md Anubis.Arch.md Anubis.Runtime.md Anubis.GreenOps.md ~/.copilot/agents/
 ```
 
 ### 3. Install runtime package
@@ -67,13 +78,13 @@ The skills reference `references/` and `schemas/` at runtime, so those
 directories must be installed next to the agent files.
 
 ```bash
-# Option A: Use the installer (installs agents + references/ + schemas/ + examples/)
+# Option A: Use the installer (installs all 5 skills + references/ + schemas/ + examples/)
 ./install.sh
 
 # Option B: Manual copy for a single agent directory
 DEST=~/.claude/agents
 mkdir -p "$DEST"
-cp Anubis.agent.md Anubis.devops.md "$DEST/"
+cp Anubis.agent.md Anubis.devops.md Anubis.Arch.md Anubis.Runtime.md Anubis.GreenOps.md "$DEST/"
 cp -R references schemas examples "$DEST/"
 ```
 
