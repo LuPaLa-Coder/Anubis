@@ -37,6 +37,30 @@ curl -fsSL https://raw.githubusercontent.com/LuPaLa-Coder/anubis/main/install.sh
 curl -fsSL https://raw.githubusercontent.com/LuPaLa-Coder/anubis/main/install.sh | bash -s -- --backup
 ```
 
+## Claude Code — Native Plugin (alternative to install.sh)
+
+Claude Code can install Anubis as a native plugin, without running any shell
+script. The repository doubles as a plugin marketplace
+(`.claude-plugin/marketplace.json` → `plugin/`).
+
+```
+/plugin marketplace add LuPaLa-Coder/anubis
+/plugin install anubis@anubis-marketplace
+```
+
+To test a local checkout before pushing:
+
+```bash
+claude --plugin-dir ./plugin
+```
+
+This path installs all 5 agents at once (no `--suite` filter, as with
+`install.sh`) and is Claude Code only — for OpenCode, Copilot, Cursor,
+Windsurf or Codex use `install.sh` as described below. The plugin's
+`agents/*.md` are generated from the root `Anubis*.md` files by
+`scripts/build-plugin.sh`; that script must be re-run after editing a root
+agent file or `references/` / `schemas/` / `examples/`.
+
 ## Manual Installation
 
 ### 1. Clone the repository

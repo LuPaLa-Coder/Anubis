@@ -1,0 +1,10 @@
+{
+  "name": "anubis",
+  "description": "Anubis Agent Suite — review tecnica .NET, security pipeline Azure DevOps, governance architetturale, performance runtime e sostenibilità cloud",
+  "version": "1.3.0",
+  "author": {
+    "name": "LuPaLa-Coder"
+  },
+  "homepage": "https://github.com/LuPaLa-Coder/anubis",
+  "repository": "https://github.com/LuPaLa-Coder/anubis"
+}

@@ -34,6 +34,17 @@ La suite include cinque skill:
 - Team DevSecOps che integrano review di codice nel workflow
 - Organizzazioni che richiedono standard di qualità rigorosi
 
+## Installazione
+
+Due percorsi, entrambi mantenuti:
+
+- **Plugin nativo Claude Code**: `/plugin marketplace add LuPaLa-Coder/anubis`
+  poi `/plugin install anubis@anubis-marketplace`.
+- **Installer multi-piattaforma** (Claude Code, OpenCode, Copilot, Cursor,
+  Windsurf, Codex): `curl -fsSL .../install.sh | bash`.
+
+Dettagli in [`docs/installation.md`](docs/installation.md).
+
 ## Architettura
 
 Le skill sono **operating contract** compatti; la conoscenza tecnica vive in
@@ -55,7 +66,17 @@ Anubis.Arch.md · Anubis.Runtime.md · Anubis.GreenOps.md
         ├── schemas/                    # finding / review / handoff
         ├── examples/                   # review svolte (incl. false positive)
         └── tests/                      # test comportamentali + regressione
+
+.claude-plugin/marketplace.json         # marketplace per /plugin install
+plugin/                                 # plugin Claude Code auto-contenuto
+  ├── .claude-plugin/plugin.json
+  ├── agents/*.md                       # generati da scripts/build-plugin.sh
+  └── references/ · schemas/ · examples/  # copia sincronizzata dei sorgenti
 ```
+
+`plugin/` è generato, non va editato a mano: dopo una modifica ai file
+`Anubis*.md` in root o a `references/`/`schemas/`/`examples/`, rieseguire
+`./scripts/build-plugin.sh`.
 
 ## Skills
 

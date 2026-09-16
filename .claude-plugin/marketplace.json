@@ -1,0 +1,15 @@
+{
+  "name": "anubis-marketplace",
+  "owner": {
+    "name": "LuPaLa-Coder",
+    "url": "https://github.com/LuPaLa-Coder/anubis"
+  },
+  "description": "Anubis Agent Suite — review tecnica .NET, security pipeline Azure DevOps, governance architetturale, performance runtime e sostenibilità cloud",
+  "plugins": [
+    {
+      "name": "anubis",
+      "source": "./plugin",
+      "description": "Anubis, Anubis-devops, Anubis-Arch, Anubis-Runtime, Anubis-GreenOps — 5 agenti specializzati per progetti .NET"
+    }
+  ]
+}
