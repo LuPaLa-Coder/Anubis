@@ -30,7 +30,7 @@ RED='\033[0;31m'   GREEN='\033[0;32m'   YELLOW='\033[1;33m'
 CYAN='\033[0;36m'  BOLD='\033[1m'      NC='\033[0m'
 
 # ── Configurazione ───────────────────────────────────────────────────────────
-ANUBIS_VERSION="1.3.0"
+ANUBIS_VERSION="1.3.1"
 REPO_URL="https://raw.githubusercontent.com/LuPaLa-Coder/anubis/main"
 REPO_TARBALL="https://github.com/LuPaLa-Coder/anubis/archive/refs/heads/main.tar.gz"
 
