@@ -1,6 +1,7 @@
 ---
 name: Anubis-Arch
 description: "Anubis-Arch Agent — governance architetturale .NET con NetArchTest rule generation, dependency graph analysis, license compliance e SBOM generation"
+model: claude-opus-5-5
 ---
 
 <!-- File generato da scripts/build-plugin.sh — non modificare a mano.

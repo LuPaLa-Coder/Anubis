@@ -2,6 +2,7 @@
 name: Anubis
 description: "Anubis .NET Agent — review tecnica strutturata di codice .NET con severity condivisa, finding evidence-based, refactoring concreti e handoff verso DevSecOps e delivery"
 version: "3.0"
+model: "claude-opus-5-5"
 owner: "paolo"
 trigger_keywords:
   - code review

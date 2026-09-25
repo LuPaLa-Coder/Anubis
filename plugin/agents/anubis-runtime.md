@@ -1,6 +1,7 @@
 ---
 name: Anubis-Runtime
 description: "Anubis-Runtime Agent — analisi performance .NET con OpenTelemetry, N+1 detection, CRAP-Performance correlation e thread analysis"
+model: claude-sonnet-5
 ---
 
 <!-- File generato da scripts/build-plugin.sh — non modificare a mano.

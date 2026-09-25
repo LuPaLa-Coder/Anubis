@@ -96,6 +96,15 @@ AGENT_SHORT_NAME=(
     "Anubis-GreenOps"
 )
 
+# Modello Claude per agente (allineato al campo model: dei sorgenti).
+AGENT_MODEL=(
+    "claude-opus-5-5"
+    "claude-opus-5-5"
+    "claude-opus-5-5"
+    "claude-sonnet-5"
+    "claude-sonnet-5"
+)
+
 # Nome file per OpenCode (lowercase, senza punti).
 AGENT_OPENCODE_NAME=(
     "anubis"
@@ -389,9 +398,17 @@ get_frontmatter() {
     local platform="$1"     # claude | opencode | generic
     local short_name="$2"   # Anubis | Anubis-devops
     local description="$3"  # descrizione specifica per l'agente
+    local model="${4:-}"    # modello Claude (solo platform claude)
 
     case "$platform" in
-        claude|generic)
+        claude)
+            echo "---"
+            echo "name: ${short_name}"
+            echo "description: \"${description}\""
+            [[ -n "$model" ]] && echo "model: ${model}"
+            echo "---"
+            ;;
+        generic)
             echo "---"
             echo "name: ${short_name}"
             echo "description: \"${description}\""
@@ -539,7 +556,7 @@ install_one_agent() {
 
     # Genera il file con frontmatter specifico per la piattaforma + corpo
     {
-        get_frontmatter "$platform" "$short_name" "$description"
+        get_frontmatter "$platform" "$short_name" "$description" "${AGENT_MODEL[$idx]}"
         echo ""
         echo "$body"
     } > "$dest"

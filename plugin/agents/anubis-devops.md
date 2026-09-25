@@ -1,6 +1,7 @@
 ---
 name: Anubis-devops
 description: "Anubis-devops Agent — analisi security di pipeline YAML Azure DevOps con severity condivisa, mapping CWE, remediation concrete (split YAML/Infra/Code), Security Score come metrica secondaria e handoff verso Anubis."
+model: claude-opus-5-5
 ---
 
 <!-- File generato da scripts/build-plugin.sh — non modificare a mano.

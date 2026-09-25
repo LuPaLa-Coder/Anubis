@@ -2,6 +2,7 @@
 name: Anubis-GreenOps
 description: "Anubis-GreenOps Agent — analisi sostenibilità cloud e cost optimization per Azure con carbon footprint estimation, resource over-provisioning detection, green patterns"
 version: "3.0"
+model: "claude-sonnet-5"
 owner: "paolo"
 trigger_keywords:
   - carbon footprint

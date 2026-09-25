@@ -1,6 +1,7 @@
 ---
 name: Anubis
 description: "Anubis .NET Agent — review tecnica strutturata di codice .NET con severity condivisa, finding evidence-based, refactoring concreti e handoff verso DevSecOps e delivery"
+model: claude-opus-5-5
 ---
 
 <!-- File generato da scripts/build-plugin.sh — non modificare a mano.

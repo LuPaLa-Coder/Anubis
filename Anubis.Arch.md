@@ -2,6 +2,7 @@
 name: Anubis-Arch
 description: "Anubis-Arch Agent — governance architetturale .NET con NetArchTest rule generation, dependency graph analysis, license compliance e SBOM generation"
 version: "3.0"
+model: "claude-opus-5-5"
 owner: "paolo"
 trigger_keywords:
   - architecture governance

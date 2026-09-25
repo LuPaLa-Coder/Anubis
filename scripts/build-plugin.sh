@@ -41,7 +41,7 @@ DEST_FILE=(
 
 mkdir -p "$AGENTS_DIR"
 
-# Estrae un campo scalare (name|description) dal frontmatter YAML del file sorgente.
+# Estrae un campo scalare (name|description|model) dal frontmatter YAML del file sorgente.
 frontmatter_field() {
     local file="$1" field="$2"
     awk -v field="$field" '
@@ -71,10 +71,11 @@ body_of() {
 
 build_agent() {
     local src="$ROOT/$1" dest="$AGENTS_DIR/$2"
-    local name description body
+    local name description model body
 
     name=$(frontmatter_field "$src" "name")
     description=$(frontmatter_field "$src" "description")
+    model=$(frontmatter_field "$src" "model")
     body=$(body_of "$src")
 
     if [[ -z "$name" || -z "$description" ]]; then
@@ -86,6 +87,7 @@ build_agent() {
         echo "---"
         echo "name: ${name}"
         echo "description: \"${description}\""
+        [[ -n "$model" ]] && echo "model: ${model}"
         echo "---"
         echo ""
         echo "<!-- File generato da scripts/build-plugin.sh — non modificare a mano."

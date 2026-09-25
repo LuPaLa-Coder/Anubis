@@ -2,6 +2,7 @@
 name: Anubis-Runtime
 description: "Anubis-Runtime Agent — analisi performance .NET con OpenTelemetry, N+1 detection, CRAP-Performance correlation e thread analysis"
 version: "3.0"
+model: "claude-sonnet-5"
 owner: "paolo"
 trigger_keywords:
   - performance review
