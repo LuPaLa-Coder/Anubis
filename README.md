@@ -213,8 +213,7 @@ agente`).
 - **Related Agents**: **Anubis-devops** (pipeline security), **Anubis-Arch**
   (governance architetturale), **Anubis-Runtime** (performance runtime) e
   **Anubis-GreenOps** (sostenibilità cloud) sono tutte parte di questo
-  repository (vedi [Agent Suite](#agent-suite)). `Anubis-azure` (audit
-  security su subscription Azure) non esiste in questo repository.
+  repository (vedi [Agent Suite](#agent-suite)).
 
 ---
 
@@ -242,5 +241,19 @@ repository.
 | Anubis-Runtime | ✅ implementato | performance runtime da tracce OpenTelemetry, N+1, lock contention, memory/GC |
 | Anubis-GreenOps | ✅ implementato | carbon footprint, cost waste, over-provisioning, green pattern |
 
-`Anubis-azure` (audit security su Azure subscription) resta fuori dal
-perimetro di questo repository: non esiste ancora come skill installabile.
+### Prossimamente: Anubis sale sul cloud ☁️
+
+Il cane da guardia dei tuoi repository sta per allargare il territorio.
+Stiamo sviluppando **Anubis-Azure** e **Anubis-AWS**: secure assessment
+per i tuoi ambienti cloud.
+
+| Agent | Stato | Cosa controlla |
+| --- | --- | --- |
+| Anubis-Azure | 🚧 in arrivo | identity e RBAC, rete, dati, segreti, compute, policy, osservabilità |
+| Anubis-AWS | 🚧 in arrivo | IAM, rete, dati, segreti, compute, policy, osservabilità |
+
+Stesso metodo della suite: severity condivisa, finding con evidenza,
+remediation concrete e handoff tra specialisti. Dal codice alla pipeline,
+fino all'account che li ospita, niente resta senza guardia.
+
+Restate sintonizzati: quando sono pronti, li trovate qui.
