@@ -27,6 +27,15 @@ La suite include cinque skill:
 | `Anubis-Runtime` | performance runtime da tracce OpenTelemetry, N+1, lock contention, memory/GC |
 | `Anubis-GreenOps` | carbon footprint, cost waste, over-provisioning, green pattern su IaC Azure |
 
+Più una skill di processo, non un reviewer:
+
+| Skill | Focus |
+| --- | --- |
+| `anubis-sdd-workflow` | Specs Driven Development a 6 step (spec → research → design → task → TDD → review), con review `Anubis` obbligatoria sul codice .NET |
+
+Si attiva con "sdd", "specs driven", "6 step", "sviluppo strutturato". Gli
+artefatti finiscono in `docs/specs/01..05-*.md` del progetto. Solo Claude Code.
+
 ## Target Users
 
 - Sviluppatori .NET che cercano feedback tecnico approfondito
@@ -52,6 +61,7 @@ Le skill sono **operating contract** compatti; la conoscenza tecnica vive in
 
 ```text
 Anubis.agent.md · Anubis.devops.md              # comportamento + workflow
+Anubis.sdd.workflow.md                          # skill SDD (Claude Code)
 Anubis.Arch.md · Anubis.Runtime.md · Anubis.GreenOps.md
         │
         ├── references/                 # knowledge base + regole
@@ -71,6 +81,7 @@ Anubis.Arch.md · Anubis.Runtime.md · Anubis.GreenOps.md
 plugin/                                 # plugin Claude Code auto-contenuto
   ├── .claude-plugin/plugin.json
   ├── agents/*.md                       # generati da scripts/build-plugin.sh
+  ├── skills/anubis-sdd-workflow/SKILL.md  # generata da Anubis.sdd.workflow.md
   └── references/ · schemas/ · examples/  # copia sincronizzata dei sorgenti
 ```
 

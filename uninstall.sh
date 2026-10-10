@@ -52,6 +52,13 @@ for dir in "${AGENTS[@]}"; do
     fi
   done
 
+  # skill SDD (solo accanto a una directory agents di Claude Code)
+  skill_dir="$(dirname "$dir")/skills/anubis-sdd-workflow"
+  if [[ "$dir" == */.claude/agents || "$dir" == */Claude/agents ]] && [[ -d "$skill_dir" ]]; then
+    rm -rf "$skill_dir"
+    echo -e "  ${GREEN}✓${NC} Rimossa skill anubis-sdd-workflow da $(dirname "$dir")/skills"
+  fi
+
   # anubis-docs/ e anubis-devops-docs/
   for d in "$dir/anubis-docs" "$dir/anubis-devops-docs"; do
     if [[ -d "$d" ]]; then

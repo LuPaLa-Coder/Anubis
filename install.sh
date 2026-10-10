@@ -16,6 +16,7 @@
 #    ./install.sh --suite arch                       # solo Anubis-Arch
 #    ./install.sh --suite runtime                    # solo Anubis-Runtime
 #    ./install.sh --suite greenops                   # solo Anubis-GreenOps
+#    ./install.sh --suite sdd                        # solo skill SDD (Claude Code)
 #    ./install.sh --agent claude                    # solo per Claude Code
 #    ./install.sh --local                          # installa nella directory corrente
 #    ./install.sh --dest DIR                       # installa in una directory specifica
@@ -57,6 +58,10 @@ REQUIRED_RUNTIME_FILES=(
     "schemas/review.schema.json"
     "schemas/handoff.schema.json"
 )
+
+# Skill Claude Code (non agente): sorgente in root -> ~/.claude/skills/<nome>/SKILL.md.
+SKILL_SDD_SOURCE="Anubis.sdd.workflow.md"
+SKILL_SDD_NAME="anubis-sdd-workflow"
 
 # Marker che identifica una directory di pacchetto gestita da questo installer.
 PACKAGE_MARKER=".anubis-package"
@@ -362,6 +367,29 @@ verify_installation() {
     return 0
 }
 
+# ── Skill SDD (solo Claude Code) ─────────────────────────────────────────────
+# La skill vive in <claude>/skills/, accanto a <claude>/agents/.
+
+install_sdd_skill() {
+    local agents_dir="$1"
+    local src="$SOURCE_DIR/$SKILL_SDD_SOURCE"
+    local dest_dir
+    dest_dir="$(dirname "$agents_dir")/skills/$SKILL_SDD_NAME"
+
+    if [[ ! -s "$src" ]]; then
+        echo -e "  ${RED}✗${NC} Sorgente skill mancante: $src" >&2
+        return 1
+    fi
+    mkdir -p "$dest_dir"
+    tr -d '\r' < "$src" > "$dest_dir/SKILL.md"
+    if [[ ! -s "$dest_dir/SKILL.md" ]]; then
+        echo -e "  ${RED}✗${NC} Installazione skill fallita: $dest_dir" >&2
+        return 1
+    fi
+    echo -e "  ${GREEN}✓${NC} Skill ${SKILL_SDD_NAME} installata per ${BOLD}Claude Code${NC}"
+    echo -e "          → ${dest_dir}/SKILL.md"
+}
+
 # ── Installa agenti + pacchetto runtime in una directory ─────────────────────
 # install_dir <dir> <agent_name> <filter>
 
@@ -373,6 +401,12 @@ install_dir() {
     mkdir -p "$target_dir"
     local platform
     platform=$(get_platform "$agent_name")
+
+    if [[ "$agent_filter" == "sdd" ]]; then
+        [[ "$platform" == "claude" ]] || { echo -e "  ${YELLOW}○${NC} Skill SDD solo per Claude Code: salto ${agent_name}"; return 0; }
+        install_sdd_skill "$target_dir"
+        return $?
+    fi
 
     local expected=()
     local id idx
@@ -388,6 +422,9 @@ install_dir() {
 
     install_package_assets "$target_dir" || return 1
     verify_installation "$target_dir" "${expected[@]}" || return 1
+    if [[ "$agent_filter" == "all" && "$platform" == "claude" ]]; then
+        install_sdd_skill "$target_dir" || return 1
+    fi
     return 0
 }
 
@@ -594,6 +631,15 @@ uninstall_agent() {
         fi
     done
 
+    if [[ "$platform" == "claude" ]]; then
+        local skill_dir
+        skill_dir="$(dirname "$target_dir")/skills/$SKILL_SDD_NAME"
+        if [[ -d "$skill_dir" ]]; then
+            rm -rf "$skill_dir"
+            echo -e "  ${GREEN}✓${NC} Skill ${SKILL_SDD_NAME} rimossa da ${BOLD}${agent_name}${NC}"
+        fi
+    fi
+
     # Rimuovi il pacchetto runtime, solo se è stato installato da noi (marker).
     if [[ -f "$target_dir/$PACKAGE_MARKER" ]]; then
         local asset
@@ -656,7 +702,7 @@ print_help() {
     echo "  --local              Installa solo nella directory corrente"
     echo "  --dest <dir>         Installa in una directory specifica (per test/automazione)"
     echo "  --agent <name>       Installa solo per un agent specifico (claude, opencode, ...)"
-    echo "  --suite <type>       Installa solo Anubis (anubis) o solo Anubis-devops (devops)"
+    echo "  --suite <type>       Installa un solo agente (anubis, devops, arch, runtime, greenops) o solo la skill SDD (sdd)"
     echo "  --backup             Crea backup dei file agent esistenti prima di sovrascrivere"
     echo "  --uninstall          Rimuove Anubis e Anubis-devops da tutti gli agent"
     echo "  --help, -h           Mostra questo help"
@@ -675,6 +721,9 @@ print_help() {
     echo "  arch      — Anubis-Arch     — Architecture Governance & Dependencies"
     echo "  runtime   — Anubis-Runtime  — Runtime Performance & OpenTelemetry"
     echo "  greenops  — Anubis-GreenOps — Cloud Sustainability & Cost Optimization"
+    echo ""
+    echo "Skill (solo Claude Code, inclusa in 'tutta la suite'):"
+    echo "  sdd       — anubis-sdd-workflow — Specs Driven Development a 6 step"
     echo ""
     echo "Esempi:"
     echo "  $0                                   # Installa tutta la suite"

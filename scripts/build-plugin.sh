@@ -107,6 +107,23 @@ while [[ $i -lt ${#SRC_FILE[@]} ]]; do
 done
 
 echo ""
+echo "Generazione skill plugin..."
+SKILL_DIR="$PLUGIN_DIR/skills/anubis-sdd-workflow"
+mkdir -p "$SKILL_DIR"
+{
+    tr -d '\r' < "$ROOT/Anubis.sdd.workflow.md" | awk '
+      BEGIN { c = 0 }
+      { print }
+      /^---$/ && c < 2 { c++; if (c == 2) {
+          print ""
+          print "<!-- File generato da scripts/build-plugin.sh — non modificare a mano."
+          print "     Sorgente: Anubis.sdd.workflow.md (root). Rieseguire lo script dopo ogni modifica. -->"
+      } }
+    '
+} > "$SKILL_DIR/SKILL.md"
+echo -e "  ${GREEN}✓${NC} plugin/skills/anubis-sdd-workflow/SKILL.md <- Anubis.sdd.workflow.md"
+
+echo ""
 echo "Sincronizzazione asset (references/ · schemas/ · examples/)..."
 for asset in references schemas examples; do
     rm -rf "$PLUGIN_DIR/$asset"

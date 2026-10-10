@@ -27,6 +27,9 @@ curl -fsSL https://raw.githubusercontent.com/LuPaLa-Coder/anubis/main/install.sh
 curl -fsSL https://raw.githubusercontent.com/LuPaLa-Coder/anubis/main/install.sh | bash -s -- --agent opencode
 curl -fsSL https://raw.githubusercontent.com/LuPaLa-Coder/anubis/main/install.sh | bash -s -- --agent copilot
 
+# Install only the SDD workflow skill (Claude Code only, ~/.claude/skills/anubis-sdd-workflow/)
+curl -fsSL https://raw.githubusercontent.com/LuPaLa-Coder/anubis/main/install.sh | bash -s -- --suite sdd
+
 # Install only one skill of the suite (anubis | devops | arch | runtime | greenops)
 curl -fsSL https://raw.githubusercontent.com/LuPaLa-Coder/anubis/main/install.sh | bash -s -- --suite arch
 
@@ -54,7 +57,7 @@ To test a local checkout before pushing:
 claude --plugin-dir ./plugin
 ```
 
-This path installs all 5 agents at once (no `--suite` filter, as with
+This path installs all 5 agents plus the `anubis-sdd-workflow` skill at once (no `--suite` filter, as with
 `install.sh`) and is Claude Code only — for OpenCode, Copilot, Cursor,
 Windsurf or Codex use `install.sh` as described below. The plugin's
 `agents/*.md` are generated from the root `Anubis*.md` files by
@@ -76,6 +79,12 @@ cd anubis
 ```bash
 mkdir -p ~/.claude/agents
 cp Anubis.agent.md Anubis.devops.md Anubis.Arch.md Anubis.Runtime.md Anubis.GreenOps.md ~/.claude/agents/
+```
+
+The SDD workflow skill (Claude Code only) goes in `skills/`, as `SKILL.md`:
+```bash
+mkdir -p ~/.claude/skills/anubis-sdd-workflow
+cp Anubis.sdd.workflow.md ~/.claude/skills/anubis-sdd-workflow/SKILL.md
 ```
 
 #### OpenCode
